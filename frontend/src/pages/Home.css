@@ -1,7 +1,6 @@
 .home {
   display: flex;
   flex-direction: column;
-  background-color: red;
   flex-grow: 1;
   width: calc(100% + 10px);
   height: calc(100vh - 120px);
@@ -45,7 +44,7 @@
   padding: 20px;
   justify-items: center;
   box-sizing: border-box;
-  background-color: rgb(72, 220, 191);
+  /* background-color: rgb(72, 220, 191); */
 }
 
 

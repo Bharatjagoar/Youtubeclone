@@ -137,11 +137,12 @@ function VideoPlayer() {
         <iframe
           width="100%"
           height="480"
-          src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`}
           frameBorder="0"
+          allow="autoplay; encrypted-media"
           allowFullScreen
           title="YouTube Video"
-        ></iframe>
+        />
 
         {/* ✅ Video metadata and channel info */}
         {videoDetails && channelDetails && (
