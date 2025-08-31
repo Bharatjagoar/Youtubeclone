@@ -4,6 +4,13 @@ import axios from "axios";
 import "./VideoPlayer.css";
 
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+const formatCount = (num) => {
+  if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + "B";
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+  if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+  return num.toString();
+};
+
 
 function VideoPlayer() {
   const { videoId } = useParams();
@@ -121,14 +128,15 @@ function VideoPlayer() {
               <img src={channelDetails.snippet.thumbnails.default.url} alt="Channel DP" />
               <div>
                 <p>{channelDetails.snippet.title}</p>
-                <p>{parseInt(channelDetails.statistics.subscriberCount).toLocaleString()} subscribers</p>
+                <p>{formatCount(channelDetails.statistics.subscriberCount)} subscribers</p>
               </div>
               <button className="subscribe-btn">Subscribe</button>
             </div>
 
             <div className="video-stats">
-              <p>{parseInt(videoDetails.statistics.viewCount).toLocaleString()} views</p>
-              <p>{parseInt(videoDetails.statistics.likeCount).toLocaleString()} likes</p>
+              <p>{formatCount(videoDetails.statistics.viewCount)} views</p>
+              <p>{formatCount(videoDetails.statistics.likeCount)} likes</p>
+              
               <p>Published on {new Date(videoDetails.snippet.publishedAt).toDateString()}</p>
             </div>
 
