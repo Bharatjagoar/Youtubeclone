@@ -12,6 +12,26 @@ const formatCount = (num) => {
 };
 
 
+const formatRelativeDate = (dateString) => {
+  const publishedDate = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - publishedDate;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHr = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHr / 24);
+  const diffMonth = Math.floor(diffDay / 30);
+  const diffYear = Math.floor(diffDay / 365);
+
+  if (diffYear > 0) return `${diffYear} year${diffYear > 1 ? "s" : ""} ago`;
+  if (diffMonth > 0) return `${diffMonth} month${diffMonth > 1 ? "s" : ""} ago`;
+  if (diffDay > 0) return `${diffDay} day${diffDay > 1 ? "s" : ""} ago`;
+  if (diffHr > 0) return `${diffHr} hour${diffHr > 1 ? "s" : ""} ago`;
+  if (diffMin > 0) return `${diffMin} minute${diffMin > 1 ? "s" : ""} ago`;
+  return "Just now";
+};
+
+
 function VideoPlayer() {
   const { videoId } = useParams();
   const { state } = useLocation();
@@ -137,7 +157,7 @@ function VideoPlayer() {
               <p>{formatCount(videoDetails.statistics.viewCount)} views</p>
               <p>{formatCount(videoDetails.statistics.likeCount)} likes</p>
               
-              <p>Published on {new Date(videoDetails.snippet.publishedAt).toDateString()}</p>
+              <p>{formatRelativeDate(videoDetails.snippet.publishedAt)}</p>
             </div>
 
             <p className="video-description">{videoDetails.snippet.description}</p>
