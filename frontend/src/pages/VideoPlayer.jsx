@@ -3,7 +3,10 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./VideoPlayer.css";
 
+// ✅ Load API key from environment variables
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+
+// ✅ Format large numbers into readable strings (e.g., 1.2K, 3.4M)
 const formatCount = (num) => {
   if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + "B";
   if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
@@ -11,7 +14,7 @@ const formatCount = (num) => {
   return num.toString();
 };
 
-
+// ✅ Convert ISO date string to relative time (e.g., "2 days ago")
 const formatRelativeDate = (dateString) => {
   const publishedDate = new Date(dateString);
   const now = new Date();
@@ -31,21 +34,22 @@ const formatRelativeDate = (dateString) => {
   return "Just now";
 };
 
-
 function VideoPlayer() {
-  const { videoId } = useParams();
-  const { state } = useLocation();
-  const navigate = useNavigate();
+  const { videoId } = useParams(); // ✅ Extract video ID from URL
+  const { state } = useLocation(); // ✅ Optional: access navigation state
+  const navigate = useNavigate();  // ✅ For navigating to related videos
 
+  // ✅ Component state
   const [videoDetails, setVideoDetails] = useState(null);
   const [channelDetails, setChannelDetails] = useState(null);
   const [comments, setComments] = useState([]);
   const [relatedVideos, setRelatedVideos] = useState([]);
 
+  // ✅ Fetch all video-related data when videoId changes
   useEffect(() => {
     const fetchVideoData = async () => {
       try {
-        // 1. Fetch video details
+        // ✅ 1. Fetch video details (title, description, stats)
         const videoRes = await axios.get("https://www.googleapis.com/youtube/v3/videos", {
           params: {
             part: "snippet,statistics",
@@ -53,11 +57,10 @@ function VideoPlayer() {
             key: API_KEY,
           },
         });
-
         const video = videoRes.data.items[0];
         setVideoDetails(video);
 
-        // 2. Fetch channel details
+        // ✅ 2. Fetch channel details (name, avatar, subscriber count)
         const channelId = video.snippet.channelId;
         const channelRes = await axios.get("https://www.googleapis.com/youtube/v3/channels", {
           params: {
@@ -66,10 +69,9 @@ function VideoPlayer() {
             key: API_KEY,
           },
         });
-
         setChannelDetails(channelRes.data.items[0]);
 
-        // 3. Fetch comments
+        // ✅ 3. Fetch top-level comments
         const commentRes = await axios.get("https://www.googleapis.com/youtube/v3/commentThreads", {
           params: {
             part: "snippet",
@@ -78,10 +80,9 @@ function VideoPlayer() {
             key: API_KEY,
           },
         });
-
         setComments(commentRes.data.items);
 
-        // 4. Fetch related videos
+        // ✅ 4. Fetch related videos (initial search)
         const relatedRes = await axios.get("https://www.googleapis.com/youtube/v3/search", {
           params: {
             part: "snippet",
@@ -92,7 +93,7 @@ function VideoPlayer() {
           },
         });
 
-        // ✅ FIX: Filter out invalid video IDs
+        // ✅ Filter out invalid video IDs
         const validIds = relatedRes.data.items
           .map((item) => item.id?.videoId)
           .filter((id) => !!id);
@@ -102,6 +103,7 @@ function VideoPlayer() {
           return;
         }
 
+        // ✅ Fetch full details for related videos
         const relatedDetails = await axios.get("https://www.googleapis.com/youtube/v3/videos", {
           params: {
             part: "snippet,statistics",
@@ -109,8 +111,8 @@ function VideoPlayer() {
             key: API_KEY,
           },
         });
-        console.log(relatedDetails);
 
+        // ✅ Format related video data for sidebar
         const formattedRelated = relatedDetails.data.items.map((vid) => ({
           id: vid.id,
           title: vid.snippet.title,
@@ -130,6 +132,7 @@ function VideoPlayer() {
 
   return (
     <div className="video-player-wrapper">
+      {/* ✅ Main video area */}
       <div className="video-player-main">
         <iframe
           width="100%"
@@ -140,10 +143,12 @@ function VideoPlayer() {
           title="YouTube Video"
         ></iframe>
 
+        {/* ✅ Video metadata and channel info */}
         {videoDetails && channelDetails && (
           <div className="video-meta">
             <h2>{videoDetails.snippet.title}</h2>
 
+            {/* ✅ Channel info block */}
             <div className="channel-info">
               <img src={channelDetails.snippet.thumbnails.default.url} alt="Channel DP" />
               <div>
@@ -153,28 +158,34 @@ function VideoPlayer() {
               <button className="subscribe-btn">Subscribe</button>
             </div>
 
+            {/* ✅ Video stats */}
             <div className="video-stats">
               <p>{formatCount(videoDetails.statistics.viewCount)} views</p>
               <p>{formatCount(videoDetails.statistics.likeCount)} likes</p>
-
               <p>{formatRelativeDate(videoDetails.snippet.publishedAt)}</p>
             </div>
 
+            {/* ✅ Video description */}
             <p className="video-description">{videoDetails.snippet.description}</p>
 
+            {/* ✅ Comment section */}
             <div className="comments-section">
               <h3>Comments</h3>
               {comments.map((comment) => {
                 const c = comment.snippet.topLevelComment.snippet;
                 return (
                   <div key={comment.id} className="comment">
+                    {/* ✅ Commenter avatar */}
                     <img src={c.authorProfileImageUrl} alt={c.authorDisplayName} className="comment-avatar" />
                     <div className="comment-body">
+                      {/* ✅ Author name and timestamp */}
                       <div className="comment-header">
                         <span className="comment-author">{c.authorDisplayName}</span>
                         <span className="comment-time">{formatRelativeDate(c.publishedAt)}</span>
                       </div>
+                      {/* ✅ Comment text */}
                       <p className="comment-text">{c.textDisplay}</p>
+                      {/* ✅ Like count and reply button */}
                       <div className="comment-actions">
                         <span className="comment-likes">{formatCount(c.likeCount)} likes</span>
                         <button className="reply-btn">Reply</button>
@@ -188,6 +199,7 @@ function VideoPlayer() {
         )}
       </div>
 
+      {/* ✅ Sidebar with related videos */}
       <aside className="video-sidebar">
         <h4>Up Next</h4>
         {relatedVideos.length === 0 ? (

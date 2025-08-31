@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import Sidebar from "../components/Sidebar.jsx";
-import VideoCard from "../components/VideoCard.jsx";
-import "./Home.css";
-import axios from "axios";
+import Sidebar from "../components/Sidebar.jsx"; // Optional: Sidebar component (not used here but imported)
+import VideoCard from "../components/VideoCard.jsx"; // ✅ Reusable card component for each video
+import "./Home.css"; // ✅ Styles for the Home layout
+import axios from "axios"; // ✅ HTTP client for API calls
 
+// ✅ Utility: Format large numbers into readable strings (e.g., 1.2K, 3.4M)
 const formatCount = (num) => {
   if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + "B";
   if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
@@ -11,6 +12,7 @@ const formatCount = (num) => {
   return num.toString();
 };
 
+// ✅ Utility: Convert ISO date string to relative time (e.g., "2 days ago")
 const formatRelativeDate = (dateString) => {
   const publishedDate = new Date(dateString);
   const now = new Date();
@@ -30,11 +32,11 @@ const formatRelativeDate = (dateString) => {
   return "Just now";
 };
 
-
 const Home = () => {
-  const [videos, setVideos] = useState([]);
-  const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+  const [videos, setVideos] = useState([]); // ✅ Store formatted video data
+  const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY; // ✅ Load API key from environment
 
+  // ✅ Utility: Convert YouTube's ISO 8601 duration format to seconds
   const parseISO8601Duration = (duration) => {
     const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
     if (!match) return 0;
@@ -47,7 +49,7 @@ const Home = () => {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        // Step 1: Search for videos
+        // ✅ Step 1: Search for trending videos
         const res = await axios.get("https://www.googleapis.com/youtube/v3/search", {
           params: {
             part: "snippet",
@@ -58,10 +60,11 @@ const Home = () => {
           },
         });
 
+        // ✅ Filter out items without valid videoId
         const items = res.data.items.filter((item) => item.id.videoId);
         const videoIds = items.map((item) => item.id.videoId).join(",");
 
-        // Step 2: Fetch video details (duration + views + channelId)
+        // ✅ Step 2: Fetch detailed video info (duration, views, channelId)
         const detailsRes = await axios.get("https://www.googleapis.com/youtube/v3/videos", {
           params: {
             part: "contentDetails,statistics,snippet",
@@ -70,11 +73,11 @@ const Home = () => {
           },
         });
 
-        // Step 3: Extract unique channel IDs
+        // ✅ Step 3: Extract unique channel IDs for profile pictures
         const channelIds = [...new Set(detailsRes.data.items.map((video) => video.snippet.channelId))];
         const channelIdStr = channelIds.join(",");
 
-        // Step 4: Fetch channel details (display picture)
+        // ✅ Step 4: Fetch channel details (name + avatar)
         const channelRes = await axios.get("https://www.googleapis.com/youtube/v3/channels", {
           params: {
             part: "snippet",
@@ -83,6 +86,7 @@ const Home = () => {
           },
         });
 
+        // ✅ Map channelId to channel info for quick lookup
         const channelMap = {};
         channelRes.data.items.forEach((channel) => {
           channelMap[channel.id] = {
@@ -91,10 +95,10 @@ const Home = () => {
           };
         });
 
-        // Step 5: Format videos
+        // ✅ Step 5: Format video data for rendering
         const formattedVideos = detailsRes.data.items.map((video) => {
           const durationSeconds = parseISO8601Duration(video.contentDetails.duration);
-          const isShort = durationSeconds <= 60;
+          const isShort = durationSeconds <= 60; // ✅ Flag Shorts
           const channelInfo = channelMap[video.snippet.channelId] || {};
 
           return {
@@ -102,27 +106,29 @@ const Home = () => {
             title: video.snippet.title,
             thumbnail: video.snippet.thumbnails.medium.url,
             isShort,
-            views: formatCount(Number(video.statistics.viewCount)), // ✅ formatted views
-            publishedAt: formatRelativeDate(video.snippet.publishedAt), // ✅ formatted date
+            views: formatCount(Number(video.statistics.viewCount)), // ✅ Format views
+            publishedAt: formatRelativeDate(video.snippet.publishedAt), // ✅ Format date
             channel: channelInfo.name || video.snippet.channelTitle,
             channelDp: channelInfo.dp || "",
           };
         });
-        console.log(formattedVideos);
-        setVideos(formattedVideos);
+
+        console.log(formattedVideos); // ✅ Debug: log formatted output
+        setVideos(formattedVideos); // ✅ Update state
       } catch (error) {
         console.error("Error fetching videos:", error.response?.data || error.message);
       }
     };
 
-    fetchVideos();
+    fetchVideos(); // ✅ Trigger fetch on mount
   }, [API_KEY]);
 
   return (
     <div className="home">
+      {/* ✅ Main grid layout for video cards */}
       <main className="video-grid">
         {videos.map((video) => (
-          <VideoCard key={video.id} video={video} />
+          <VideoCard key={video.id} video={video} /> // ✅ Render each video as a card
         ))}
       </main>
     </div>
