@@ -1,0 +1,39 @@
+.categories {
+  display: flex;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+  overflow-x: scroll;
+  white-space: nowrap;
+  /* background-color: rebeccapurple; */
+  height: 60px;
+  /* flex-grow: 3; */
+}
+
+.category-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+  /* ensures button doesn’t shrink */
+}
+
+.category-btn:hover {
+  background: #eee;
+}
+
+/* Hide scrollbar (optional, keeps UI clean) */
+.categories::-webkit-scrollbar {
+  display: none;
+}
+
+.categories {
+  -ms-overflow-style: none;
+  /* IE/Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}

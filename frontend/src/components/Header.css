@@ -1,0 +1,82 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: white;
+  border-bottom: 1px solid #ddd;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 100;
+  height: 60px;
+}
+
+.logo-combo {
+  /* background-color: yellow; */
+  margin-left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+}
+
+.logo-text {
+  font-size: 40px;
+  font-weight: 700;
+  color: #333;
+  font-family: sans-serif;
+  font-size: 2.9rem;
+}
+
+.youtube-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-btn {
+  background-color: #f0f0f0;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.search-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.search-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.spacer {
+  width: 120px;
+  /* Approximate width of the removed logo */
+}
+
+.search-bar {
+  width: 60%;
+  max-width: 500px;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+}
+
+
+.signin-btn {
+  background-color: #0073e6;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}

@@ -1,0 +1,160 @@
+.sidebar {
+  background-color: #ffffff;
+  border-right: 1px solid #ddd;
+  height: calc(100vh - 50px);
+  width: 200px;
+  padding: 10px 0;
+  position: relative;
+  transition: width 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.closed {
+  width: 60px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  min-height: 50px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.youtube-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-combo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  font-family: sans-serif;
+}
+.logo-combo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  font-size: 18px;
+  color: #333;
+  margin: 0 auto;
+}
+
+.tab-list {
+  list-style: none;
+  padding: 10px 0;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: background 0.2s ease;
+}
+
+.tab-item:hover {
+  background-color: #f2f2f2;
+}
+
+.tab-icon {
+  font-size: 24px; /* was 20px */
+  margin-right: 16px; /* was 12px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar.closed .tab-label {
+  display: none;
+}
+
+.tab-item.active {
+  background-color: #e6f0ff;
+  font-weight: bold;
+}
+
+
+
+
+
+/* Ensure toggle button stays visible & aligned even in closed mode */
+.sidebar.closed .sidebar-toggle {
+  margin-left: auto;
+}
+
+/* Center the YouTube icon in closed mode */
+.sidebar.closed .logo {
+  flex: 1;
+  justify-content: center;
+}
+
+/* Make sure toggle button doesn't "fight" for space when collapsed */
+.sidebar.closed .sidebar-header {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px; /* space between icon and hamburger in collapsed mode */
+  padding: 8px 0;
+}
+
+
+
+
+/* Wrap logo for better centering */
+.logo-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Collapsed mode: center everything vertically */
+.sidebar.closed .sidebar-header {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+  gap: 10px;
+}
+
+/* Ensure tab list has spacing from header */
+.tab-list {
+  margin-top: 10px;
+}
+
+/* Optional: reduce icon size slightly for better visual balance */
+.sidebar.closed .tab-icon {
+  font-size: 22px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+}

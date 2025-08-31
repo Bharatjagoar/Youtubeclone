@@ -1,0 +1,49 @@
+/* Global Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  background-color: #fafafa;
+  color: #333;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.Navbar {
+  background-color: yellow;
+  height: 65px;
+  flex-shrink: 0;
+}
+
+.Content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.Sidebar {
+  width: 240px;
+  background-color: #eee;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.categoriesContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px;
+}
