@@ -25,7 +25,9 @@ const VideoCard = ({ video }) => {
         <div className="video-meta">
           <h3 className="video-title">{video.title}</h3>
           <p className="video-channel">{video.channel}</p>
-          <p className="video-stats">{parseInt(video.views).toLocaleString()} views</p>
+          <p className="video-stats">
+            {video.views} views · {video.publishedAt}
+          </p>
         </div>
       </div>
     </div>

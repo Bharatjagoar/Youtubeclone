@@ -4,6 +4,33 @@ import VideoCard from "../components/VideoCard.jsx";
 import "./Home.css";
 import axios from "axios";
 
+const formatCount = (num) => {
+  if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + "B";
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+  if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+  return num.toString();
+};
+
+const formatRelativeDate = (dateString) => {
+  const publishedDate = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - publishedDate;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHr = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHr / 24);
+  const diffMonth = Math.floor(diffDay / 30);
+  const diffYear = Math.floor(diffDay / 365);
+
+  if (diffYear > 0) return `${diffYear} year${diffYear > 1 ? "s" : ""} ago`;
+  if (diffMonth > 0) return `${diffMonth} month${diffMonth > 1 ? "s" : ""} ago`;
+  if (diffDay > 0) return `${diffDay} day${diffDay > 1 ? "s" : ""} ago`;
+  if (diffHr > 0) return `${diffHr} hour${diffHr > 1 ? "s" : ""} ago`;
+  if (diffMin > 0) return `${diffMin} minute${diffMin > 1 ? "s" : ""} ago`;
+  return "Just now";
+};
+
+
 const Home = () => {
   const [videos, setVideos] = useState([]);
   const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
@@ -75,9 +102,10 @@ const Home = () => {
             title: video.snippet.title,
             thumbnail: video.snippet.thumbnails.medium.url,
             isShort,
-            views: video.statistics.viewCount,
+            views: formatCount(Number(video.statistics.viewCount)), // ✅ formatted views
+            publishedAt: formatRelativeDate(video.snippet.publishedAt), // ✅ formatted date
             channel: channelInfo.name || video.snippet.channelTitle,
-            channelDp: channelInfo.dp || "", // fallback if not found
+            channelDp: channelInfo.dp || "",
           };
         });
         console.log(formattedVideos);
