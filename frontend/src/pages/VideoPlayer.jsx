@@ -156,7 +156,7 @@ function VideoPlayer() {
             <div className="video-stats">
               <p>{formatCount(videoDetails.statistics.viewCount)} views</p>
               <p>{formatCount(videoDetails.statistics.likeCount)} likes</p>
-              
+
               <p>{formatRelativeDate(videoDetails.snippet.publishedAt)}</p>
             </div>
 
@@ -168,8 +168,18 @@ function VideoPlayer() {
                 const c = comment.snippet.topLevelComment.snippet;
                 return (
                   <div key={comment.id} className="comment">
-                    <p><strong>{c.authorDisplayName}</strong></p>
-                    <p>{c.textDisplay}</p>
+                    <img src={c.authorProfileImageUrl} alt={c.authorDisplayName} className="comment-avatar" />
+                    <div className="comment-body">
+                      <div className="comment-header">
+                        <span className="comment-author">{c.authorDisplayName}</span>
+                        <span className="comment-time">{formatRelativeDate(c.publishedAt)}</span>
+                      </div>
+                      <p className="comment-text">{c.textDisplay}</p>
+                      <div className="comment-actions">
+                        <span className="comment-likes">{formatCount(c.likeCount)} likes</span>
+                        <button className="reply-btn">Reply</button>
+                      </div>
+                    </div>
                   </div>
                 );
               })}
