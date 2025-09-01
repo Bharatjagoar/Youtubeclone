@@ -1,19 +1,30 @@
 // src/components/Header.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaYoutube, FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { setQuery, fetchSearchResults } from "../redux/searchSlice";
 import axios from "axios";
 import "./Header.css";
 
 const Header = () => {
-  const [input, setInput] = useState("");               // ✅ Local input state
-  const [suggestions, setSuggestions] = useState([]);   // ✅ Enriched suggestions
-  const dispatch = useDispatch();
+  const [input, setInput] = useState("");               // ✅ Input value
+  const [suggestions, setSuggestions] = useState([]);   // ✅ Suggestions list
+  const [results, setResults] = useState([]);           // ✅ Search results
+  const [isLoading, setIsLoading] = useState(false);    // ✅ Loading state
   const navigate = useNavigate();
+  const suggestionRef = useRef();                       // ✅ Ref for suggestion box
 
-  // ✅ Fetch suggestions with full metadata
+  // ✅ Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (suggestionRef.current && !suggestionRef.current.contains(e.target)) {
+        setSuggestions([]);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // ✅ Fetch suggestions from YouTube
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (!input.trim()) {
@@ -22,7 +33,6 @@ const Header = () => {
       }
 
       try {
-        // 🔹 Step 1: Get video IDs from search endpoint
         const searchRes = await axios.get("https://www.googleapis.com/youtube/v3/search", {
           params: {
             q: input,
@@ -34,14 +44,13 @@ const Header = () => {
 
         const videoIds = searchRes.data.items
           .map((item) => item.id?.videoId)
-          .filter(Boolean); // ✅ Filter out undefined/null IDs
+          .filter(Boolean);
 
         if (videoIds.length === 0) {
           setSuggestions([]);
           return;
         }
 
-        // 🔹 Step 2: Fetch full video details using videos endpoint
         const detailsRes = await axios.get("https://www.googleapis.com/youtube/v3/videos", {
           params: {
             part: "snippet",
@@ -50,10 +59,9 @@ const Header = () => {
           },
         });
 
-        // ✅ Store enriched suggestions with title/snippet
         setSuggestions(detailsRes.data.items);
       } catch (err) {
-        console.error("Error fetching enriched suggestions:", err.message);
+        console.error("Error fetching suggestions:", err.message);
         setSuggestions([]);
       }
     };
@@ -61,68 +69,121 @@ const Header = () => {
     fetchSuggestions();
   }, [input]);
 
-  // ✅ Trigger search and update Redux state
-  const handleSearch = (query = input) => {
+  // ✅ Fetch search results
+  const handleSearch = async (query = input) => {
     if (!query.trim()) return;
-    dispatch(setQuery(query));
-    dispatch(fetchSearchResults(query));
-    navigate(`/search/${query}`);
+    setIsLoading(true);
     setSuggestions([]);
+
+    try {
+      const searchRes = await axios.get("https://www.googleapis.com/youtube/v3/search", {
+        params: {
+          q: query,
+          type: "video",
+          maxResults: 20,
+          key: import.meta.env.VITE_YOUTUBE_API_KEY,
+        },
+      });
+
+      const videoIds = searchRes.data.items
+        .map((item) => item.id?.videoId)
+        .filter(Boolean);
+
+      if (videoIds.length === 0) {
+        setResults([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const detailsRes = await axios.get("https://www.googleapis.com/youtube/v3/videos", {
+        params: {
+          part: "snippet",
+          id: videoIds.join(","),
+          key: import.meta.env.VITE_YOUTUBE_API_KEY,
+        },
+      });
+
+      setResults(detailsRes.data.items);
+    } catch (err) {
+      console.error("Error fetching search results:", err.message);
+      setResults([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // ✅ Handle Enter key press
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       handleSearch();
     }
   };
 
-  // ✅ Navigate to homepage on logo click
   const handleLogoClick = () => {
     navigate("/");
+    setInput("");
+    setSuggestions([]);
+    setResults([]);
   };
 
   return (
-    <header className="header">
-      {/* ✅ Logo section */}
-      <div className="logo-combo" onClick={handleLogoClick}>
-        <FaYoutube size={24} color="red" className="youtube-icon" />
-        <span className="logo-text">YouTube</span>
-      </div>
+    <>
+      <header className="header">
+        <div className="logo-combo" onClick={handleLogoClick}>
+          <FaYoutube size={24} color="red" className="youtube-icon" />
+          <span className="logo-text">YouTube</span>
+        </div>
 
-      {/* ✅ Search bar section */}
-      <div className="search-container">
-        <input
-          type="text"
-          placeholder="Search"
-          className="search-bar"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
-        <button className="search-btn" aria-label="Search" onClick={() => handleSearch()}>
-          <FaSearch />
-        </button>
+        <div className="search-container" ref={suggestionRef}>
+          <input
+            type="text"
+            placeholder="Search"
+            className="search-bar"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <button className="search-btn" aria-label="Search" onClick={() => handleSearch()}>
+            <FaSearch />
+          </button>
 
-        {/* ✅ Suggestions dropdown */}
-        {suggestions.length > 0 && (
-          <ul className="suggestions-list">
-            {suggestions.map((item) => (
-              <li
-                key={item.id}
-                className="suggestion-item"
-                onClick={() => handleSearch(item.snippet.title)}
-              >
-                {item.snippet.title}
-              </li>
-            ))}
-          </ul>
+          {suggestions.length > 0 && (
+            <ul className="suggestions-list">
+              {suggestions.map((item) => (
+                <li
+                  key={item.id}
+                  className="suggestion-item"
+                  onClick={() => handleSearch(item.snippet.title)}
+                >
+                  {item.snippet.title}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <button className="signin-btn">Sign In</button>
+      </header>
+
+      <main className="results-container">
+        {isLoading ? (
+          <p className="loading-text">Loading results...</p>
+        ) : (
+          results.map((video) => (
+            <div key={video.id} className="video-card">
+              <img
+                src={video.snippet.thumbnails.medium.url}
+                alt={video.snippet.title}
+                className="video-thumb"
+              />
+              <div className="video-info">
+                <h4 className="video-title">{video.snippet.title}</h4>
+                <p className="video-channel">{video.snippet.channelTitle}</p>
+              </div>
+            </div>
+          ))
         )}
-      </div>
-
-      {/* ✅ Placeholder for future auth */}
-      <button className="signin-btn">Sign In</button>
-    </header>
+      </main>
+    </>
   );
 };
 
