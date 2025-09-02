@@ -76,37 +76,87 @@ const Header = () => {
     setSuggestions([]);
 
     try {
+      // 🔹 Step 1: Fetch up to 50 mixed results (videos + channels)
       const searchRes = await axios.get("https://www.googleapis.com/youtube/v3/search", {
         params: {
           q: query,
-          type: "video",
-          maxResults: 20,
-          key: import.meta.env.VITE_YOUTUBE_API_KEY,
-        },
-      });
-
-      const videoIds = searchRes.data.items
-        .map((item) => item.id?.videoId)
-        .filter(Boolean);
-
-      if (videoIds.length === 0) {
-        setResults([]);
-        setIsLoading(false);
-        return;
-      }
-
-      const detailsRes = await axios.get("https://www.googleapis.com/youtube/v3/videos", {
-        params: {
           part: "snippet",
-          id: videoIds.join(","),
+          maxResults: 50,
           key: import.meta.env.VITE_YOUTUBE_API_KEY,
         },
       });
 
-      setResults(detailsRes.data.items);
+      const items = searchRes.data.items;
+
+      // 🔹 Step 2: Separate videoIds and channelIds
+      const videoIds = items
+        .filter((item) => item.id.kind === "youtube#video")
+        .map((item) => item.id.videoId);
+
+      const channelIds = items
+        .filter((item) => item.id.kind === "youtube#channel")
+        .map((item) => item.id.channelId);
+
+      // 🔹 Step 3: Fetch full video details
+      const videoDetailsRes = videoIds.length
+        ? await axios.get("https://www.googleapis.com/youtube/v3/videos", {
+          params: {
+            part: "snippet,statistics,contentDetails",
+            id: videoIds.join(","),
+            key: import.meta.env.VITE_YOUTUBE_API_KEY,
+          },
+        })
+        : { data: { items: [] } };
+
+      // 🔹 Step 4: Fetch channel details
+      const channelDetailsRes = channelIds.length
+        ? await axios.get("https://www.googleapis.com/youtube/v3/channels", {
+          params: {
+            part: "snippet,statistics",
+            id: channelIds.join(","),
+            key: import.meta.env.VITE_YOUTUBE_API_KEY,
+          },
+        })
+        : { data: { items: [] } };
+
+      // 🔹 Step 5: Merge and enrich
+      const enrichedVideos = videoDetailsRes.data.items.map((video) => ({
+        type: "video",
+        id: video.id,
+        title: video.snippet.title,
+        thumbnail: video.snippet.thumbnails.medium.url,
+        channelId: video.snippet.channelId,
+        channelName: video.snippet.channelTitle,
+        channelAvatar: null, // will be filled later
+        views: video.statistics.viewCount,
+        likes: video.statistics.likeCount,
+        duration: video.contentDetails.duration,
+      }));
+
+      const enrichedChannels = channelDetailsRes.data.items.map((channel) => ({
+        type: "channel",
+        id: channel.id,
+        title: channel.snippet.title,
+        avatar: channel.snippet.thumbnails.default.url,
+        subscribers: channel.statistics.subscriberCount,
+        description: channel.snippet.description,
+      }));
+
+      // 🔹 Step 6: Fill channel avatars into video objects
+      const channelMap = {};
+      enrichedChannels.forEach((c) => {
+        channelMap[c.id] = c.avatar;
+      });
+
+      enrichedVideos.forEach((v) => {
+        v.channelAvatar = channelMap[v.channelId] || null;
+      });
+
+      // 🔹 Step 7: Combine and log
+      const finalData = [...enrichedVideos, ...enrichedChannels];
+      console.log("🔍 Final Search Results:", finalData);
     } catch (err) {
-      console.error("Error fetching search results:", err.message);
-      setResults([]);
+      console.error("❌ Error fetching enriched search results:", err.message);
     } finally {
       setIsLoading(false);
     }
