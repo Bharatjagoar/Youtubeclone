@@ -50,68 +50,68 @@ const Home = () => {
     const fetchVideos = async () => {
       try {
         // ✅ Step 1: Search for trending videos
-        const res = await axios.get("https://www.googleapis.com/youtube/v3/search", {
-          params: {
-            part: "snippet",
-            q: "trending",
-            type: "video",
-            maxResults: 50,
-            key: API_KEY,
-          },
-        });
+        // const res = await axios.get("https://www.googleapis.com/youtube/v3/search", {
+        //   params: {
+        //     part: "snippet",
+        //     q: "trending",
+        //     type: "video",
+        //     maxResults: 50,
+        //     key: API_KEY,
+        //   },
+        // });
 
-        // ✅ Filter out items without valid videoId
-        const items = res.data.items.filter((item) => item.id.videoId);
-        const videoIds = items.map((item) => item.id.videoId).join(",");
+        // // ✅ Filter out items without valid videoId
+        // const items = res.data.items.filter((item) => item.id.videoId);
+        // const videoIds = items.map((item) => item.id.videoId).join(",");
 
-        // ✅ Step 2: Fetch detailed video info (duration, views, channelId)
-        const detailsRes = await axios.get("https://www.googleapis.com/youtube/v3/videos", {
-          params: {
-            part: "contentDetails,statistics,snippet",
-            id: videoIds,
-            key: API_KEY,
-          },
-        });
+        // // ✅ Step 2: Fetch detailed video info (duration, views, channelId)
+        // const detailsRes = await axios.get("https://www.googleapis.com/youtube/v3/videos", {
+        //   params: {
+        //     part: "contentDetails,statistics,snippet",
+        //     id: videoIds,
+        //     key: API_KEY,
+        //   },
+        // });
 
-        // ✅ Step 3: Extract unique channel IDs for profile pictures
-        const channelIds = [...new Set(detailsRes.data.items.map((video) => video.snippet.channelId))];
-        const channelIdStr = channelIds.join(",");
+        // // ✅ Step 3: Extract unique channel IDs for profile pictures
+        // const channelIds = [...new Set(detailsRes.data.items.map((video) => video.snippet.channelId))];
+        // const channelIdStr = channelIds.join(",");
 
-        // ✅ Step 4: Fetch channel details (name + avatar)
-        const channelRes = await axios.get("https://www.googleapis.com/youtube/v3/channels", {
-          params: {
-            part: "snippet",
-            id: channelIdStr,
-            key: API_KEY,
-          },
-        });
+        // // ✅ Step 4: Fetch channel details (name + avatar)
+        // const channelRes = await axios.get("https://www.googleapis.com/youtube/v3/channels", {
+        //   params: {
+        //     part: "snippet",
+        //     id: channelIdStr,
+        //     key: API_KEY,
+        //   },
+        // });
 
-        // ✅ Map channelId to channel info for quick lookup
-        const channelMap = {};
-        channelRes.data.items.forEach((channel) => {
-          channelMap[channel.id] = {
-            name: channel.snippet.title,
-            dp: channel.snippet.thumbnails.default.url,
-          };
-        });
+        // // ✅ Map channelId to channel info for quick lookup
+        // const channelMap = {};
+        // channelRes.data.items.forEach((channel) => {
+        //   channelMap[channel.id] = {
+        //     name: channel.snippet.title,
+        //     dp: channel.snippet.thumbnails.default.url,
+        //   };
+        // });
 
         // ✅ Step 5: Format video data for rendering
-        const formattedVideos = detailsRes.data.items.map((video) => {
-          const durationSeconds = parseISO8601Duration(video.contentDetails.duration);
-          const isShort = durationSeconds <= 60; // ✅ Flag Shorts
-          const channelInfo = channelMap[video.snippet.channelId] || {};
+        // const formattedVideos = detailsRes.data.items.map((video) => {
+        //   const durationSeconds = parseISO8601Duration(video.contentDetails.duration);
+        //   const isShort = durationSeconds <= 60; // ✅ Flag Shorts
+        //   const channelInfo = channelMap[video.snippet.channelId] || {};
 
-          return {
-            id: video.id,
-            title: video.snippet.title,
-            thumbnail: video.snippet.thumbnails.medium.url,
-            isShort,
-            views: formatCount(Number(video.statistics.viewCount)), // ✅ Format views
-            publishedAt: formatRelativeDate(video.snippet.publishedAt), // ✅ Format date
-            channel: channelInfo.name || video.snippet.channelTitle,
-            channelDp: channelInfo.dp || "",
-          };
-        });
+        //   return {
+        //     id: video.id,
+        //     title: video.snippet.title,
+        //     thumbnail: video.snippet.thumbnails.medium.url,
+        //     isShort,
+        //     views: formatCount(Number(video.statistics.viewCount)), // ✅ Format views
+        //     publishedAt: formatRelativeDate(video.snippet.publishedAt), // ✅ Format date
+        //     channel: channelInfo.name || video.snippet.channelTitle,
+        //     channelDp: channelInfo.dp || "",
+        //   };
+        // });
 
         console.log(formattedVideos); // ✅ Debug: log formatted output
         setVideos(formattedVideos); // ✅ Update state

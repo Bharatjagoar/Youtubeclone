@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { FaYoutube, FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import AuthModal from "./AuthModel";
 import "./Header.css";
 
 const Header = () => {
@@ -12,6 +13,7 @@ const Header = () => {
   const [isLoading, setIsLoading] = useState(false);    // ✅ Loading state
   const navigate = useNavigate();
   const suggestionRef = useRef();                       // ✅ Ref for suggestion box
+  const [showAuthModal, setShowAuthModal] = useState(false); //✅ Ref for authmodal box
 
   // ✅ Close suggestions when clicking outside
   useEffect(() => {
@@ -211,7 +213,8 @@ const Header = () => {
           )}
         </div>
 
-        <button className="signin-btn">Sign In</button>
+        <button className="signin-btn" onClick={() => setShowAuthModal(true)}>Sign In</button>
+        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
       </header>
 
       <main className="results-container">
