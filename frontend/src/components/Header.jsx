@@ -1,21 +1,23 @@
-// src/components/Header.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { FaYoutube, FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
+import { openAuthModal, closeAuthModal } from "../redux/authSlice";
 import AuthModal from "./AuthModel";
 import "./Header.css";
 
 const Header = () => {
-  const [input, setInput] = useState("");               // ✅ Input value
-  const [suggestions, setSuggestions] = useState([]);   // ✅ Suggestions list
-  const [results, setResults] = useState([]);           // ✅ Search results
-  const [isLoading, setIsLoading] = useState(false);    // ✅ Loading state
+  const [input, setInput] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [results, setResults] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const suggestionRef = useRef();                       // ✅ Ref for suggestion box
-  const [showAuthModal, setShowAuthModal] = useState(false); //✅ Ref for authmodal box
+  const suggestionRef = useRef();
+  const showAuthModal = useSelector((state) => state.auth.showAuthModal);
+  const dispatch = useDispatch();
+  const debounceTimer = useRef(null);
 
-  // ✅ Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (suggestionRef.current && !suggestionRef.current.contains(e.target)) {
@@ -26,59 +28,86 @@ const Header = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ✅ Fetch suggestions from YouTube
+  // ✅ Debounced suggestion fetch (videos + channels)
   useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (!input.trim()) {
-        setSuggestions([]);
-        return;
-      }
+    if (!input.trim()) {
+      setSuggestions([]);
+      return;
+    }
 
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    debounceTimer.current = setTimeout(async () => {
       try {
         const searchRes = await axios.get("https://www.googleapis.com/youtube/v3/search", {
           params: {
             q: input,
-            type: "video",
-            maxResults: 5,
-            key: import.meta.env.VITE_YOUTUBE_API_KEY,
-          },
-        });
-
-        const videoIds = searchRes.data.items
-          .map((item) => item.id?.videoId)
-          .filter(Boolean);
-
-        if (videoIds.length === 0) {
-          setSuggestions([]);
-          return;
-        }
-
-        const detailsRes = await axios.get("https://www.googleapis.com/youtube/v3/videos", {
-          params: {
             part: "snippet",
-            id: videoIds.join(","),
+            maxResults: 10,
             key: import.meta.env.VITE_YOUTUBE_API_KEY,
           },
         });
 
-        setSuggestions(detailsRes.data.items);
+        const items = searchRes.data.items;
+
+        const videoIds = items
+          .filter((item) => item.id.kind === "youtube#video")
+          .map((item) => item.id.videoId);
+
+        const channelIds = items
+          .filter((item) => item.id.kind === "youtube#channel")
+          .map((item) => item.id.channelId);
+
+        const videoDetailsRes = videoIds.length
+          ? await axios.get("https://www.googleapis.com/youtube/v3/videos", {
+              params: {
+                part: "snippet",
+                id: videoIds.join(","),
+                key: import.meta.env.VITE_YOUTUBE_API_KEY,
+              },
+            })
+          : { data: { items: [] } };
+
+        const channelDetailsRes = channelIds.length
+          ? await axios.get("https://www.googleapis.com/youtube/v3/channels", {
+              params: {
+                part: "snippet",
+                id: channelIds.join(","),
+                key: import.meta.env.VITE_YOUTUBE_API_KEY,
+              },
+            })
+          : { data: { items: [] } };
+
+        const enrichedVideos = videoDetailsRes.data.items.map((video) => ({
+          type: "video",
+          id: video.id,
+          title: video.snippet.title,
+        }));
+
+        const enrichedChannels = channelDetailsRes.data.items.map((channel) => ({
+          type: "channel",
+          id: channel.id,
+          title: channel.snippet.title,
+        }));
+
+        setSuggestions([...enrichedVideos, ...enrichedChannels]);
       } catch (err) {
         console.error("Error fetching suggestions:", err.message);
         setSuggestions([]);
       }
-    };
+    }, 400);
 
-    fetchSuggestions();
+    return () => clearTimeout(debounceTimer.current);
   }, [input]);
 
-  // ✅ Fetch search results
   const handleSearch = async (query = input) => {
     if (!query.trim()) return;
     setIsLoading(true);
     setSuggestions([]);
 
     try {
-      // 🔹 Step 1: Fetch up to 50 mixed results (videos + channels)
       const searchRes = await axios.get("https://www.googleapis.com/youtube/v3/search", {
         params: {
           q: query,
@@ -90,7 +119,6 @@ const Header = () => {
 
       const items = searchRes.data.items;
 
-      // 🔹 Step 2: Separate videoIds and channelIds
       const videoIds = items
         .filter((item) => item.id.kind === "youtube#video")
         .map((item) => item.id.videoId);
@@ -99,29 +127,26 @@ const Header = () => {
         .filter((item) => item.id.kind === "youtube#channel")
         .map((item) => item.id.channelId);
 
-      // 🔹 Step 3: Fetch full video details
       const videoDetailsRes = videoIds.length
         ? await axios.get("https://www.googleapis.com/youtube/v3/videos", {
-          params: {
-            part: "snippet,statistics,contentDetails",
-            id: videoIds.join(","),
-            key: import.meta.env.VITE_YOUTUBE_API_KEY,
-          },
-        })
+            params: {
+              part: "snippet,statistics,contentDetails",
+              id: videoIds.join(","),
+              key: import.meta.env.VITE_YOUTUBE_API_KEY,
+            },
+          })
         : { data: { items: [] } };
 
-      // 🔹 Step 4: Fetch channel details
       const channelDetailsRes = channelIds.length
         ? await axios.get("https://www.googleapis.com/youtube/v3/channels", {
-          params: {
-            part: "snippet,statistics",
-            id: channelIds.join(","),
-            key: import.meta.env.VITE_YOUTUBE_API_KEY,
-          },
-        })
+            params: {
+              part: "snippet,statistics",
+              id: channelIds.join(","),
+              key: import.meta.env.VITE_YOUTUBE_API_KEY,
+            },
+          })
         : { data: { items: [] } };
 
-      // 🔹 Step 5: Merge and enrich
       const enrichedVideos = videoDetailsRes.data.items.map((video) => ({
         type: "video",
         id: video.id,
@@ -129,7 +154,7 @@ const Header = () => {
         thumbnail: video.snippet.thumbnails.medium.url,
         channelId: video.snippet.channelId,
         channelName: video.snippet.channelTitle,
-        channelAvatar: null, // will be filled later
+        channelAvatar: null,
         views: video.statistics.viewCount,
         likes: video.statistics.likeCount,
         duration: video.contentDetails.duration,
@@ -144,7 +169,6 @@ const Header = () => {
         description: channel.snippet.description,
       }));
 
-      // 🔹 Step 6: Fill channel avatars into video objects
       const channelMap = {};
       enrichedChannels.forEach((c) => {
         channelMap[c.id] = c.avatar;
@@ -154,9 +178,9 @@ const Header = () => {
         v.channelAvatar = channelMap[v.channelId] || null;
       });
 
-      // 🔹 Step 7: Combine and log
       const finalData = [...enrichedVideos, ...enrichedChannels];
       console.log("🔍 Final Search Results:", finalData);
+      setResults(finalData);
     } catch (err) {
       console.error("❌ Error fetching enriched search results:", err.message);
     } finally {
@@ -204,17 +228,17 @@ const Header = () => {
                 <li
                   key={item.id}
                   className="suggestion-item"
-                  onClick={() => handleSearch(item.snippet.title)}
+                  onClick={() => handleSearch(item.title)}
                 >
-                  {item.snippet.title}
+                  {item.type === "channel" ? `📺 ${item.title}` : item.title}
                 </li>
               ))}
             </ul>
           )}
         </div>
 
-        <button className="signin-btn" onClick={() => setShowAuthModal(true)}>Sign In</button>
-        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+        <button className="signin-btn" onClick={() => dispatch(openAuthModal())}>Sign In</button>
+        {showAuthModal && <AuthModal onClose={() => dispatch(closeAuthModal())} />}
       </header>
 
       <main className="results-container">
@@ -224,13 +248,13 @@ const Header = () => {
           results.map((video) => (
             <div key={video.id} className="video-card">
               <img
-                src={video.snippet.thumbnails.medium.url}
-                alt={video.snippet.title}
+                src={video.thumbnail}
+                alt={video.title}
                 className="video-thumb"
               />
               <div className="video-info">
-                <h4 className="video-title">{video.snippet.title}</h4>
-                <p className="video-channel">{video.snippet.channelTitle}</p>
+                <h4 className="video-title">{video.title}</h4>
+                <p className="video-channel">{video.channelName}</p>
               </div>
             </div>
           ))

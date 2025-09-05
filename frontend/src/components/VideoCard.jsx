@@ -1,23 +1,39 @@
 import React from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { openAuthModal } from "../redux/authSlice";
+import { verifyTokenBeforeFetch } from "../utils/verifyTokenBeforeFetch";
+import PromptsModal from "./promptsModal";
 import "./VideoCard.css";
 
-const VideoCard = ({ video }) => {
+const VideoCard = ({ video,detect }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  
 
-  // ✅ Navigate to video player page with full video data
-  const handleClick = () => {
+
+  const handleClick = async () => {
+    const isValid = await verifyTokenBeforeFetch();
+    detect(isValid);
+    console.log("true now")
+    
+    if (!isValid) {
+      console.log("not valid ");
+      // dispatch(openAuthModal()); // 🔔 Show pre-sign-in prompt
+      return;
+    }
+
     navigate(`/video/${video.id}`, { state: { video } });
   };
 
+
+
+
   return (
     <div className="video-card" onClick={handleClick}>
-      {/* ✅ Thumbnail preview */}
       <img src={video.thumbnail} alt={video.title} className="thumbnail" />
-
-      {/* ✅ Video metadata section */}
       <div className="video-details">
-        {/* ✅ Channel avatar (fallback to first letter if no image) */}
         <div className="channel-avatar">
           {video.channelDp ? (
             <img src={video.channelDp} alt={video.channel} className="avatar-circle" />
@@ -25,8 +41,6 @@ const VideoCard = ({ video }) => {
             <div className="avatar-circle">{video.channel?.charAt(0)}</div>
           )}
         </div>
-
-        {/* ✅ Title, channel name, and stats */}
         <div className="video-meta">
           <h3 className="video-title">{video.title}</h3>
           <p className="video-channel">{video.channel}</p>
@@ -35,6 +49,10 @@ const VideoCard = ({ video }) => {
           </p>
         </div>
       </div>
+      {/* {showPrompt && <PromptsModal onClose={() => {
+        setShowPrompt(false);
+        console.log("false now")
+        }} />} */}
     </div>
   );
 };

@@ -40,22 +40,33 @@ const AuthModal = ({ onClose }) => {
 
       if (isSignup) {
         payload.username = formData.username;
-        // Optional: handle avatar upload later
         const res = await fetch("http://localhost:5000/api/auth/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        console.log("✅ Signup response:", data);
+        if (res.ok) {
+          console.log("✅ Signup successful:", data);
+        } else {
+          setError(data.error || "Signup failed");
+          return;
+        }
       } else {
-        const res = await fetch("http://localhost:5000/api/auth/login", {
+        const res = await fetch("http://localhost:5000/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        console.log("✅ Login response:", data);
+        if (res.ok) {
+          console.log("✅ Login successful:", data);
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+        } else {
+          setError(data.error || "Login failed");
+          return;
+        }
       }
 
       onClose();

@@ -8,10 +8,11 @@ const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
 // ✅ Format large numbers into readable strings (e.g., 1.2K, 3.4M)
 const formatCount = (num) => {
+  console.log("numer :: ",num);
   if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + "B";
   if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
   if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
-  return num.toString();
+  return num?.toString();
 };
 
 // ✅ Convert ISO date string to relative time (e.g., "2 days ago")
