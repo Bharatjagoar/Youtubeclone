@@ -4,6 +4,7 @@ const authSlice = createSlice({
   name: "auth",
   initialState: {
     showAuthModal: false,
+    isLoggedIn: false, // 🔥 new global login state
   },
   reducers: {
     openAuthModal: (state) => {
@@ -12,8 +13,11 @@ const authSlice = createSlice({
     closeAuthModal: (state) => {
       state.showAuthModal = false;
     },
+    setLoginStatus: (state, action) => {
+      state.isLoggedIn = action.payload;
+    },
   },
 });
 
-export const { openAuthModal, closeAuthModal } = authSlice.actions;
+export const { openAuthModal, closeAuthModal, setLoginStatus } = authSlice.actions;
 export default authSlice.reducer;

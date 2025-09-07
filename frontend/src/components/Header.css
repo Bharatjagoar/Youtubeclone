@@ -167,3 +167,10 @@
   font-size: 18px;
   text-align: center;
 }
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+}

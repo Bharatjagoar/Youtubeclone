@@ -1,7 +1,10 @@
 import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { setLoginStatus, closeAuthModal } from "../redux/authSlice";
 import "./AuthModal.css";
 
 const AuthModal = ({ onClose }) => {
+  const dispatch = useDispatch();
   const [isSignup, setIsSignup] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
@@ -38,38 +41,36 @@ const AuthModal = ({ onClose }) => {
         password: formData.password,
       };
 
+      let res, data;
+
       if (isSignup) {
         payload.username = formData.username;
-        const res = await fetch("http://localhost:5000/api/auth/signup", {
+        res = await fetch("http://localhost:5000/api/auth/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        const data = await res.json();
-        if (res.ok) {
-          console.log("✅ Signup successful:", data);
-        } else {
-          setError(data.error || "Signup failed");
-          return;
-        }
       } else {
-        const res = await fetch("http://localhost:5000/auth/login", {
+        res = await fetch("http://localhost:5000/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        const data = await res.json();
-        if (res.ok) {
-          console.log("✅ Login successful:", data);
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("user", JSON.stringify(data.user));
-        } else {
-          setError(data.error || "Login failed");
-          return;
-        }
       }
 
-      onClose();
+      data = await res.json();
+
+      if (res.ok) {
+        console.log(`✅ ${isSignup ? "Signup" : "Login"} successful:`, data);
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        dispatch(setLoginStatus(true)); // 🔥 update global login state
+        dispatch(closeAuthModal());     // optional: close modal via Redux
+        onClose();                      // close modal via prop
+      } else {
+        setError(data.error || `${isSignup ? "Signup" : "Login"} failed`);
+      }
     } catch (err) {
       console.error("❌ Auth error:", err.message);
       setError("Something went wrong. Please try again.");

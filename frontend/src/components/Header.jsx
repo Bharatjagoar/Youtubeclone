@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaYoutube, FaSearch } from "react-icons/fa";
+import { FaYoutube, FaSearch, FaSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
+import { fetchSearchResults, setQuery } from "../redux/searchSlice";
 import axios from "axios";
 import { openAuthModal, closeAuthModal } from "../redux/authSlice";
+import { verifyTokenBeforeFetch } from "../utils/verifyTokenBeforeFetch";
 import AuthModal from "./AuthModel";
+import { setLoginStatus } from "../redux/authSlice";
 import "./Header.css";
 
 const Header = () => {
@@ -17,6 +20,7 @@ const Header = () => {
   const showAuthModal = useSelector((state) => state.auth.showAuthModal);
   const dispatch = useDispatch();
   const debounceTimer = useRef(null);
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -25,6 +29,12 @@ const Header = () => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
+    async function setlogin() {
+      const verified = await verifyTokenBeforeFetch();
+      dispatch(setLoginStatus(verified)); // 🔥 update global state
+    }
+
+    setlogin();
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
@@ -62,22 +72,22 @@ const Header = () => {
 
         const videoDetailsRes = videoIds.length
           ? await axios.get("https://www.googleapis.com/youtube/v3/videos", {
-              params: {
-                part: "snippet",
-                id: videoIds.join(","),
-                key: import.meta.env.VITE_YOUTUBE_API_KEY,
-              },
-            })
+            params: {
+              part: "snippet",
+              id: videoIds.join(","),
+              key: import.meta.env.VITE_YOUTUBE_API_KEY,
+            },
+          })
           : { data: { items: [] } };
 
         const channelDetailsRes = channelIds.length
           ? await axios.get("https://www.googleapis.com/youtube/v3/channels", {
-              params: {
-                part: "snippet",
-                id: channelIds.join(","),
-                key: import.meta.env.VITE_YOUTUBE_API_KEY,
-              },
-            })
+            params: {
+              part: "snippet",
+              id: channelIds.join(","),
+              key: import.meta.env.VITE_YOUTUBE_API_KEY,
+            },
+          })
           : { data: { items: [] } };
 
         const enrichedVideos = videoDetailsRes.data.items.map((video) => ({
@@ -102,90 +112,14 @@ const Header = () => {
     return () => clearTimeout(debounceTimer.current);
   }, [input]);
 
-  const handleSearch = async (query = input) => {
+
+
+  // Inside Header component
+  const handleSearch = (query = input) => {
     if (!query.trim()) return;
-    setIsLoading(true);
+    dispatch(setQuery(query));
+    dispatch(fetchSearchResults(query));
     setSuggestions([]);
-
-    try {
-      const searchRes = await axios.get("https://www.googleapis.com/youtube/v3/search", {
-        params: {
-          q: query,
-          part: "snippet",
-          maxResults: 50,
-          key: import.meta.env.VITE_YOUTUBE_API_KEY,
-        },
-      });
-
-      const items = searchRes.data.items;
-
-      const videoIds = items
-        .filter((item) => item.id.kind === "youtube#video")
-        .map((item) => item.id.videoId);
-
-      const channelIds = items
-        .filter((item) => item.id.kind === "youtube#channel")
-        .map((item) => item.id.channelId);
-
-      const videoDetailsRes = videoIds.length
-        ? await axios.get("https://www.googleapis.com/youtube/v3/videos", {
-            params: {
-              part: "snippet,statistics,contentDetails",
-              id: videoIds.join(","),
-              key: import.meta.env.VITE_YOUTUBE_API_KEY,
-            },
-          })
-        : { data: { items: [] } };
-
-      const channelDetailsRes = channelIds.length
-        ? await axios.get("https://www.googleapis.com/youtube/v3/channels", {
-            params: {
-              part: "snippet,statistics",
-              id: channelIds.join(","),
-              key: import.meta.env.VITE_YOUTUBE_API_KEY,
-            },
-          })
-        : { data: { items: [] } };
-
-      const enrichedVideos = videoDetailsRes.data.items.map((video) => ({
-        type: "video",
-        id: video.id,
-        title: video.snippet.title,
-        thumbnail: video.snippet.thumbnails.medium.url,
-        channelId: video.snippet.channelId,
-        channelName: video.snippet.channelTitle,
-        channelAvatar: null,
-        views: video.statistics.viewCount,
-        likes: video.statistics.likeCount,
-        duration: video.contentDetails.duration,
-      }));
-
-      const enrichedChannels = channelDetailsRes.data.items.map((channel) => ({
-        type: "channel",
-        id: channel.id,
-        title: channel.snippet.title,
-        avatar: channel.snippet.thumbnails.default.url,
-        subscribers: channel.statistics.subscriberCount,
-        description: channel.snippet.description,
-      }));
-
-      const channelMap = {};
-      enrichedChannels.forEach((c) => {
-        channelMap[c.id] = c.avatar;
-      });
-
-      enrichedVideos.forEach((v) => {
-        v.channelAvatar = channelMap[v.channelId] || null;
-      });
-
-      const finalData = [...enrichedVideos, ...enrichedChannels];
-      console.log("🔍 Final Search Results:", finalData);
-      setResults(finalData);
-    } catch (err) {
-      console.error("❌ Error fetching enriched search results:", err.message);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleKeyDown = (e) => {
@@ -200,6 +134,7 @@ const Header = () => {
     setSuggestions([]);
     setResults([]);
   };
+  console.log(isLoggedIn);
 
   return (
     <>
@@ -236,10 +171,22 @@ const Header = () => {
             </ul>
           )}
         </div>
+        {!isLoggedIn ? (
+          <button className="signin-btn" onClick={() => dispatch(openAuthModal())}>
+            Sign In
+          </button>
+        ) : (
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"
+            alt="User Avatar"
+            className="user-avatar"
+            // onClick={() => navigate("} // optional: navigate to profile
+          />
+        )}
 
-        <button className="signin-btn" onClick={() => dispatch(openAuthModal())}>Sign In</button>
         {showAuthModal && <AuthModal onClose={() => dispatch(closeAuthModal())} />}
       </header>
+
 
       <main className="results-container">
         {isLoading ? (
