@@ -91,7 +91,6 @@ const AuthModal = ({ onClose }) => {
               className="avatar-img"
             />
             <label className="avatar-label">
-              Upload Avatar
               <input type="file" accept="image/*" onChange={handleAvatarChange} />
             </label>
           </div>
@@ -135,7 +134,9 @@ const AuthModal = ({ onClose }) => {
             />
           )}
           {error && <p className="error-text">{error}</p>}
-          <button type="submit">{isSignup ? "Sign Up" : "Sign In"}</button>
+          <button type="submit" className="auth-submit-btn">
+            {isSignup ? "Sign Up" : "Sign In"}
+          </button>
         </form>
         <p onClick={() => setIsSignup(!isSignup)}>
           {isSignup ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}

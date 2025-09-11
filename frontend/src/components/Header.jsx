@@ -6,12 +6,14 @@ import { fetchSearchResults, setQuery } from "../redux/searchSlice";
 import axios from "axios";
 import { openAuthModal, closeAuthModal } from "../redux/authSlice";
 import { verifyTokenBeforeFetch } from "../utils/verifyTokenBeforeFetch";
+import LogoutModal from "./LogoutModal";
 import AuthModal from "./AuthModel";
 import { setLoginStatus } from "../redux/authSlice";
 import "./Header.css";
 
 const Header = () => {
   const [input, setInput] = useState("");
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -60,49 +62,12 @@ const Header = () => {
           },
         });
 
-        const items = searchRes.data.items;
+        const items = searchRes.data.items.map(data=>{
+              return data.snippet.title;
+        });
+        console.log(items);
 
-        const videoIds = items
-          .filter((item) => item.id.kind === "youtube#video")
-          .map((item) => item.id.videoId);
-
-        const channelIds = items
-          .filter((item) => item.id.kind === "youtube#channel")
-          .map((item) => item.id.channelId);
-
-        const videoDetailsRes = videoIds.length
-          ? await axios.get("https://www.googleapis.com/youtube/v3/videos", {
-            params: {
-              part: "snippet",
-              id: videoIds.join(","),
-              key: import.meta.env.VITE_YOUTUBE_API_KEY,
-            },
-          })
-          : { data: { items: [] } };
-
-        const channelDetailsRes = channelIds.length
-          ? await axios.get("https://www.googleapis.com/youtube/v3/channels", {
-            params: {
-              part: "snippet",
-              id: channelIds.join(","),
-              key: import.meta.env.VITE_YOUTUBE_API_KEY,
-            },
-          })
-          : { data: { items: [] } };
-
-        const enrichedVideos = videoDetailsRes.data.items.map((video) => ({
-          type: "video",
-          id: video.id,
-          title: video.snippet.title,
-        }));
-
-        const enrichedChannels = channelDetailsRes.data.items.map((channel) => ({
-          type: "channel",
-          id: channel.id,
-          title: channel.snippet.title,
-        }));
-
-        setSuggestions([...enrichedVideos, ...enrichedChannels]);
+        setSuggestions([...items]);
       } catch (err) {
         console.error("Error fetching suggestions:", err.message);
         setSuggestions([]);
@@ -117,6 +82,7 @@ const Header = () => {
   // Inside Header component
   const handleSearch = (query = input) => {
     if (!query.trim()) return;
+    console.log("hellow ");
     dispatch(setQuery(query));
     dispatch(fetchSearchResults(query));
     setSuggestions([]);
@@ -159,13 +125,13 @@ const Header = () => {
 
           {suggestions.length > 0 && (
             <ul className="suggestions-list">
-              {suggestions.map((item) => (
+              {suggestions.map((item,index) => (
                 <li
-                  key={item.id}
+                  key={index}
                   className="suggestion-item"
-                  onClick={() => handleSearch(item.title)}
+                  onClick={() => handleSearch(item)}
                 >
-                  {item.type === "channel" ? `📺 ${item.title}` : item.title}
+                  {item}
                 </li>
               ))}
             </ul>
@@ -180,10 +146,10 @@ const Header = () => {
             src="https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"
             alt="User Avatar"
             className="user-avatar"
-            // onClick={() => navigate("} // optional: navigate to profile
+            onClick={() => setShowLogoutModal(true)}
           />
         )}
-
+        {showLogoutModal && <LogoutModal onClose={() => setShowLogoutModal(false)} />}
         {showAuthModal && <AuthModal onClose={() => dispatch(closeAuthModal())} />}
       </header>
 

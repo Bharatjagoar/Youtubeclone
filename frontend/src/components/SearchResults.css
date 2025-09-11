@@ -1,0 +1,109 @@
+/* src/components/SearchResults.css */
+
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+/* Each result card: thumbnail left, info right */
+.search-result-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* Thumbnail image */
+.result-thumbnail {
+  width: 360px;
+  height: 202px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* Info block next to thumbnail */
+.result-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 100%;
+}
+
+/* Title of video or channel */
+.result-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: black;
+}
+
+/* Channel name + avatar */
+.result-channel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #191919;
+}
+
+/* Small circular avatar */
+.channel-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Meta info: views, duration, subscribers */
+.result-meta {
+  /* font-size: 0.85rem; */
+  color: #424242;
+}
+
+/* Description: truncated to 2 lines with ellipsis */
+.result-description {
+  /* font-size: 0.9rem; */
+  color: #aaa;
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+  max-height: calc(1.4em * 2); /* fallback for browsers that ignore line-clamp */
+  word-break: break-word;
+}
+
+/* Loading and empty states */
+.loading-text,
+.no-results {
+  padding: 20px;
+  text-align: center;
+  color: #aaa;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .search-result-card {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .result-thumbnail {
+    width: 100%;
+    height: auto;
+  }
+
+  .result-info {
+    width: 100%;
+    text-align: center;
+  }
+
+  .result-description {
+    text-align: left;
+  }
+}

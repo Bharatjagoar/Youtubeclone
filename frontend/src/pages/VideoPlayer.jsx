@@ -1,223 +1,373 @@
+// src/components/VideoPlayer.jsx
 import React, { useEffect, useState } from "react";
-import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { FaThumbsUp } from "react-icons/fa";
 import axios from "axios";
 import "./VideoPlayer.css";
 
-// ✅ Load API key from environment variables
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
-// ✅ Format large numbers into readable strings (e.g., 1.2K, 3.4M)
 const formatCount = (num) => {
-  console.log("numer :: ",num);
   if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + "B";
   if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
   if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
   return num?.toString();
 };
 
-// ✅ Convert ISO date string to relative time (e.g., "2 days ago")
 const formatRelativeDate = (dateString) => {
-  const publishedDate = new Date(dateString);
+  const published = new Date(dateString);
   const now = new Date();
-  const diffMs = now - publishedDate;
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHr = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHr / 24);
-  const diffMonth = Math.floor(diffDay / 30);
-  const diffYear = Math.floor(diffDay / 365);
-
-  if (diffYear > 0) return `${diffYear} year${diffYear > 1 ? "s" : ""} ago`;
-  if (diffMonth > 0) return `${diffMonth} month${diffMonth > 1 ? "s" : ""} ago`;
-  if (diffDay > 0) return `${diffDay} day${diffDay > 1 ? "s" : ""} ago`;
-  if (diffHr > 0) return `${diffHr} hour${diffHr > 1 ? "s" : ""} ago`;
-  if (diffMin > 0) return `${diffMin} minute${diffMin > 1 ? "s" : ""} ago`;
+  const diff = now - published;
+  const sec = Math.floor(diff / 1000);
+  const min = Math.floor(sec / 60);
+  const hr = Math.floor(min / 60);
+  const day = Math.floor(hr / 24);
+  const mon = Math.floor(day / 30);
+  const yr = Math.floor(day / 365);
+  if (yr > 0) return `${yr} year${yr > 1 ? "s" : ""} ago`;
+  if (mon > 0) return `${mon} month${mon > 1 ? "s" : ""} ago`;
+  if (day > 0) return `${day} day${day > 1 ? "s" : ""} ago`;
+  if (hr > 0) return `${hr} hour${hr > 1 ? "s" : ""} ago`;
+  if (min > 0) return `${min} minute${min > 1 ? "s" : ""} ago`;
   return "Just now";
 };
 
 function VideoPlayer() {
-  const { videoId } = useParams(); // ✅ Extract video ID from URL
-  const { state } = useLocation(); // ✅ Optional: access navigation state
-  const navigate = useNavigate();  // ✅ For navigating to related videos
+  const { videoId } = useParams();
+  const navigate = useNavigate();
 
-  // ✅ Component state
+  // YouTube API data
   const [videoDetails, setVideoDetails] = useState(null);
   const [channelDetails, setChannelDetails] = useState(null);
   const [comments, setComments] = useState([]);
   const [relatedVideos, setRelatedVideos] = useState([]);
 
-  // ✅ Fetch all video-related data when videoId changes
+  // UI state
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeCountUI, setLikeCountUI] = useState(0);
+  const [subscriberCountUI, setSubscriberCountUI] = useState(0);
+  const [newComment, setNewComment] = useState("");
+
+  // Seed UI counts after fetch
   useEffect(() => {
-    const fetchVideoData = async () => {
+    if (videoDetails) {
+      setLikeCountUI(Number(videoDetails.statistics.likeCount));
+    }
+  }, [videoDetails]);
+
+  useEffect(() => {
+    if (channelDetails) {
+      setSubscriberCountUI(
+        Number(channelDetails.statistics.subscriberCount)
+      );
+    }
+  }, [channelDetails]);
+
+  // Fetch video, channel, comments, related
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        // ✅ 1. Fetch video details (title, description, stats)
-        const videoRes = await axios.get("https://www.googleapis.com/youtube/v3/videos", {
-          params: {
-            part: "snippet,statistics",
-            id: videoId,
-            key: API_KEY,
-          },
-        });
-        const video = videoRes.data.items[0];
-        setVideoDetails(video);
+        // video details
+        const vidRes = await axios.get(
+          "https://www.googleapis.com/youtube/v3/videos",
+          {
+            params: {
+              part: "snippet,statistics",
+              id: videoId,
+              key: API_KEY,
+            },
+          }
+        );
+        const vid = vidRes.data.items[0];
+        setVideoDetails(vid);
 
-        // ✅ 2. Fetch channel details (name, avatar, subscriber count)
-        const channelId = video.snippet.channelId;
-        const channelRes = await axios.get("https://www.googleapis.com/youtube/v3/channels", {
-          params: {
-            part: "snippet,statistics",
-            id: channelId,
-            key: API_KEY,
-          },
-        });
-        setChannelDetails(channelRes.data.items[0]);
+        // channel details
+        const chId = vid.snippet.channelId;
+        const chRes = await axios.get(
+          "https://www.googleapis.com/youtube/v3/channels",
+          {
+            params: {
+              part: "snippet,statistics",
+              id: chId,
+              key: API_KEY,
+            },
+          }
+        );
+        setChannelDetails(chRes.data.items[0]);
 
-        // ✅ 3. Fetch top-level comments
-        const commentRes = await axios.get("https://www.googleapis.com/youtube/v3/commentThreads", {
-          params: {
-            part: "snippet",
-            videoId,
-            maxResults: 20,
-            key: API_KEY,
-          },
-        });
-        setComments(commentRes.data.items);
+        // comments
+        const comRes = await axios.get(
+          "https://www.googleapis.com/youtube/v3/commentThreads",
+          {
+            params: {
+              part: "snippet",
+              videoId,
+              maxResults: 20,
+              key: API_KEY,
+            },
+          }
+        );
+        setComments(comRes.data.items);
 
-        // ✅ 4. Fetch related videos (initial search)
-        const relatedRes = await axios.get("https://www.googleapis.com/youtube/v3/search", {
-          params: {
-            part: "snippet",
-            relatedToVideoId: videoId,
-            type: "video",
-            maxResults: 20,
-            key: API_KEY,
-          },
-        });
-
-        // ✅ Filter out invalid video IDs
-        const validIds = relatedRes.data.items
-          .map((item) => item.id?.videoId)
-          .filter((id) => !!id);
-
-        if (validIds.length === 0) {
-          setRelatedVideos([]);
-          return;
+        // related videos
+        const relRes = await axios.get(
+          "https://www.googleapis.com/youtube/v3/search",
+          {
+            params: {
+              part: "snippet",
+              relatedToVideoId: videoId,
+              type: "video",
+              maxResults: 20,
+              key: API_KEY,
+            },
+          }
+        );
+        const ids = relRes.data.items
+          .map((i) => i.id.videoId)
+          .filter(Boolean);
+        if (ids.length) {
+          const relDet = await axios.get(
+            "https://www.googleapis.com/youtube/v3/videos",
+            {
+              params: {
+                part: "snippet,statistics",
+                id: ids.join(","),
+                key: API_KEY,
+              },
+            }
+          );
+          setRelatedVideos(
+            relDet.data.items.map((v) => ({
+              id: v.id,
+              title: v.snippet.title,
+              thumbnail: v.snippet.thumbnails.medium.url,
+              channel: v.snippet.channelTitle,
+              views: v.statistics.viewCount,
+            }))
+          );
         }
-
-        // ✅ Fetch full details for related videos
-        const relatedDetails = await axios.get("https://www.googleapis.com/youtube/v3/videos", {
-          params: {
-            part: "snippet,statistics",
-            id: validIds.join(","),
-            key: API_KEY,
-          },
-        });
-
-        // ✅ Format related video data for sidebar
-        const formattedRelated = relatedDetails.data.items.map((vid) => ({
-          id: vid.id,
-          title: vid.snippet.title,
-          thumbnail: vid.snippet.thumbnails.medium.url,
-          channel: vid.snippet.channelTitle,
-          views: vid.statistics.viewCount,
-        }));
-
-        setRelatedVideos(formattedRelated);
-      } catch (err) {
-        console.error("Error loading video data:", err.message);
+      } catch (e) {
+        console.error(e);
       }
     };
-
-    fetchVideoData();
+    fetchData();
   }, [videoId]);
+
+  // Handlers
+  const handleLike = () => {
+    setLiked(!liked);
+    if (!liked && likeCountUI < 1000) {
+      setLikeCountUI((p) => p + 1);
+
+    }
+  };
+
+  const handleSubscribe = () => {
+    if (subscriberCountUI < 1000) {
+      setSubscriberCountUI((p) => p + 1);
+    }
+  };
+
+  // inside VideoPlayer.jsx
+
+  const handlePostComment = async () => {
+    const text = newComment.trim();
+    if (!text) return;
+
+    try {
+      // hit your own backend route
+      const { data: saved } = await axios.post("http://localhost:5000/comments", {
+        videoId,
+        author: "Anonymous",
+        text,
+      });
+
+      // map the saved comment into our UI shape
+      const obj = {
+        id: saved._id,
+        snippet: {
+          topLevelComment: {
+            snippet: {
+              authorDisplayName: saved.author,
+              authorProfileImageUrl:
+                channelDetails.snippet.thumbnails.default.url,
+              textDisplay: saved.text,
+              publishedAt: saved.createdAt,
+              likeCount: 0,
+            },
+          },
+        },
+      };
+
+      setComments((prev) => [obj, ...prev]);
+      setNewComment("");
+    } catch (err) {
+      console.error("Error posting comment to backend:", err);
+    }
+  };
+
 
   return (
     <div className="video-player-wrapper">
-      {/* ✅ Main video area */}
       <div className="video-player-main">
         <iframe
           width="100%"
           height="480"
-          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`}
+          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0&modestbranding=1`}
           frameBorder="0"
           allow="autoplay; encrypted-media"
           allowFullScreen
           title="YouTube Video"
         />
 
-        {/* ✅ Video metadata and channel info */}
         {videoDetails && channelDetails && (
-          <div className="video-meta">
-            <h2>{videoDetails.snippet.title}</h2>
+          <>
+            <div className="video-meta">
+              <h2>{videoDetails.snippet.title}</h2>
 
-            {/* ✅ Channel info block */}
-            <div className="channel-info">
-              <img src={channelDetails.snippet.thumbnails.default.url} alt="Channel DP" />
-              <div>
-                <p>{channelDetails.snippet.title}</p>
-                <p>{formatCount(channelDetails.statistics.subscriberCount)} subscribers</p>
+              <div className="channel-info">
+                <img
+                  src={channelDetails.snippet.thumbnails.default.url}
+                  alt={channelDetails.snippet.title}
+                />
+                <div>
+                  <p>{channelDetails.snippet.title}</p>
+                  <p>{formatCount(subscriberCountUI)} subscribers</p>
+                </div>
+                <button
+                  className="subscribe-btn"
+                  onClick={handleSubscribe}
+                >
+                  Subscribe
+                </button>
               </div>
-              <button className="subscribe-btn">Subscribe</button>
+
+              <div className="video-stats">
+                <span>
+                  {formatCount(videoDetails.statistics.viewCount)} views
+                </span>
+                <span className="dot">•</span>
+
+                <button
+                  className={`like-btn ${liked ? "liked" : ""}`}
+                  onClick={handleLike}
+                >
+                  <FaThumbsUp className="like-icon" />
+                  <span className="like-count">
+                    {formatCount(likeCountUI)}
+                  </span>
+                </button>
+
+                <span className="dot">•</span>
+                <span>
+                  {formatRelativeDate(
+                    videoDetails.snippet.publishedAt
+                  )}
+                </span>
+              </div>
+
+              <div className="description-box">
+                <div
+                  className={`desc-content ${descExpanded ? "expanded" : ""
+                    }`}
+                >
+                  {videoDetails.snippet.description}
+                </div>
+                <button
+                  className="desc-toggle-btn"
+                  onClick={() => setDescExpanded((p) => !p)}
+                >
+                  {descExpanded ? "Show less" : "Show more"}
+                </button>
+              </div>
             </div>
 
-            {/* ✅ Video stats */}
-            <div className="video-stats">
-              <p>{formatCount(videoDetails.statistics.viewCount)} views</p>
-              <p>{formatCount(videoDetails.statistics.likeCount)} likes</p>
-              <p>{formatRelativeDate(videoDetails.snippet.publishedAt)}</p>
-            </div>
-
-            {/* ✅ Video description */}
-            <p className="video-description">{videoDetails.snippet.description}</p>
-
-            {/* ✅ Comment section */}
             <div className="comments-section">
-              <h3>Comments</h3>
+              <div className="comments-section-header">
+                <span className="comments-count">
+                  {comments.length.toLocaleString()} Comments
+                </span>
+                <button className="comments-sort">Sort by</button>
+              </div>
+
+              <div className="add-comment">
+                <img
+                  src={channelDetails.snippet.thumbnails.default.url}
+                  alt="You"
+                  className="comment-avatar"
+                />
+                <textarea
+                  className="comment-input"
+                  placeholder="Add a public comment..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                />
+                <button
+                  className="comment-post-btn"
+                  onClick={handlePostComment}
+                >
+                  Comment
+                </button>
+              </div>
+
               {comments.map((comment) => {
-                const c = comment.snippet.topLevelComment.snippet;
+                const c =
+                  comment.snippet.topLevelComment.snippet;
                 return (
                   <div key={comment.id} className="comment">
-                    {/* ✅ Commenter avatar */}
-                    <img src={c.authorProfileImageUrl} alt={c.authorDisplayName} className="comment-avatar" />
+                    <img
+                      src={c.authorProfileImageUrl}
+                      alt={c.authorDisplayName}
+                      className="comment-avatar"
+                    />
                     <div className="comment-body">
-                      {/* ✅ Author name and timestamp */}
                       <div className="comment-header">
-                        <span className="comment-author">{c.authorDisplayName}</span>
-                        <span className="comment-time">{formatRelativeDate(c.publishedAt)}</span>
+                        <span className="comment-author">
+                          {c.authorDisplayName}
+                        </span>
+                        <span className="comment-time">
+                          {formatRelativeDate(c.publishedAt)}
+                        </span>
                       </div>
-                      {/* ✅ Comment text */}
-                      <p className="comment-text">{c.textDisplay}</p>
-                      {/* ✅ Like count and reply button */}
+                      <p className="comment-text">
+                        {c.textDisplay}
+                      </p>
                       <div className="comment-actions">
-                        <span className="comment-likes">{formatCount(c.likeCount)} likes</span>
-                        <button className="reply-btn">Reply</button>
+                        <span className="comment-likes">
+                          {formatCount(c.likeCount)} likes
+                        </span>
+                        <button className="reply-btn">
+                          Reply
+                        </button>
                       </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
+          </>
         )}
       </div>
 
-      {/* ✅ Sidebar with related videos */}
       <aside className="video-sidebar">
         <h4>Up Next</h4>
         {relatedVideos.length === 0 ? (
           <p>No related videos found.</p>
         ) : (
-          relatedVideos.map((video) => (
+          relatedVideos.map((v) => (
             <div
-              key={video.id}
+              key={v.id}
               className="sidebar-card"
-              onClick={() => navigate(`/video/${video.id}`)}
+              onClick={() => navigate(`/video/${v.id}`)}
             >
-              <img src={video.thumbnail} alt={video.title} />
+              <img src={v.thumbnail} alt={v.title} />
               <div>
-                <p className="sidebar-title">{video.title}</p>
-                <p className="sidebar-channel">{video.channel}</p>
-                <p className="sidebar-views">{parseInt(video.views).toLocaleString()} views</p>
+                <p className="sidebar-title">{v.title}</p>
+                <p className="sidebar-channel">{v.channel}</p>
+                <p className="sidebar-views">
+                  {parseInt(v.views).toLocaleString()} views
+                </p>
               </div>
             </div>
           ))

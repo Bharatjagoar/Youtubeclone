@@ -6,14 +6,17 @@ const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
 export const fetchSearchResults = createAsyncThunk(
   "search/fetchSearchResults",
   async (query) => {
-    const searchRes = await axios.get("https://www.googleapis.com/youtube/v3/search", {
-      params: {
-        q: query,
-        part: "snippet",
-        maxResults: 50,
-        key: apiKey,
-      },
-    });
+    const searchRes = await axios.get(
+      "https://www.googleapis.com/youtube/v3/search",
+      {
+        params: {
+          q: query,
+          part: "snippet",
+          maxResults: 50,
+          key: apiKey,
+        },
+      }
+    );
 
     const items = searchRes.data.items;
 
@@ -49,13 +52,13 @@ export const fetchSearchResults = createAsyncThunk(
       type: "video",
       id: video.id,
       title: video.snippet.title,
+      description: video.snippet.description,
       thumbnail: video.snippet.thumbnails.medium.url,
       channelId: video.snippet.channelId,
       channelName: video.snippet.channelTitle,
       channelAvatar: null,
       views: video.statistics.viewCount,
-      likes: video.statistics.likeCount,
-      
+      duration: video.contentDetails.duration, // ISO 8601 format
     }));
 
     const enrichedChannels = channelDetailsRes.data.items.map((channel) => ({
@@ -85,6 +88,7 @@ const searchSlice = createSlice({
   initialState: {
     query: "",
     results: [],
+    isResult: false,
     isLoading: false,
   },
   reducers: {
@@ -93,16 +97,23 @@ const searchSlice = createSlice({
     },
     clearResults: (state) => {
       state.results = [];
+      state.isResult = false;
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchSearchResults.pending, (state) => {
         state.isLoading = true;
-      })
+        state.isResult = false; // reset before new results
+      }) 
       .addCase(fetchSearchResults.fulfilled, (state, action) => {
         state.results = action.payload;
+        state.isResult = true;
         state.isLoading = false;
+      })
+      .addCase(fetchSearchResults.rejected, (state) => {
+        state.isLoading = false;
+        state.isResult = false;
       });
   },
 });

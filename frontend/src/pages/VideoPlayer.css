@@ -1,3 +1,6 @@
+/* src/components/VideoPlayer.css */
+
+/* Layout */
 .video-player-wrapper {
   display: flex;
   gap: 20px;
@@ -9,15 +12,12 @@
   flex: 3;
 }
 
-.video-meta {
-  margin-top: 20px;
-}
-
 .video-meta h2 {
   font-size: 1.5rem;
   margin-bottom: 10px;
 }
 
+/* Channel Info */
 .channel-info {
   display: flex;
   align-items: center;
@@ -31,48 +31,169 @@
   border-radius: 50%;
 }
 
-.channel-info div {
-  flex-grow: 1;
-}
-
 .subscribe-btn {
+  margin-left: auto;
   background-color: red;
   color: white;
   border: none;
   padding: 8px 16px;
+  border-radius: 4px;
   font-weight: bold;
   cursor: pointer;
-  border-radius: 4px;
 }
 
+/* Video Stats */
 .video-stats {
   display: flex;
-  gap: 20px;
+  align-items: center;
+  gap: 12px;
   font-size: 0.9rem;
   color: #555;
   margin-bottom: 10px;
 }
 
-.video-description {
-  font-size: 0.95rem;
-  color: #333;
-  margin-bottom: 20px;
-  white-space: pre-wrap;
+.video-stats .dot {
+  color: #888;
 }
 
+.like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #606060;
+  /* default grey */
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.like-btn:hover {
+  color: #030303;
+  /* darker on hover */
+}
+
+.like-btn.liked {
+  color: #065fd4;
+  /* YouTube’s accent blue */
+  animation: pop 0.3s ease-out;
+}
+
+.like-icon {
+  font-size: 1rem;
+}
+
+.like-count {
+  font-weight: 500;
+}
+
+.like-btn.liked .like-icon,
+.like-btn.liked .like-count {
+  color: inherit;
+}
+
+@keyframes pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* Description Toggle */
+.description-box {
+  margin-top: 12px;
+}
+
+.desc-content {
+  max-height: 100px;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.desc-content.expanded {
+  max-height: 800px;
+}
+
+.desc-toggle-btn {
+  margin-top: 6px;
+  background: none;
+  border: none;
+  color: #065fd4;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Comments Section */
 .comments-section {
   margin-top: 30px;
 }
 
-.comments-section h3 {
-  margin-bottom: 10px;
+.comments-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
+.comments-count {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #030303;
+}
+
+.comments-sort {
+  background: none;
+  border: none;
+  color: #606060;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* Add Comment */
+.add-comment {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.add-comment .comment-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.comment-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+  border-radius: 24px;
+  font-size: 0.95rem;
+  resize: none;
+  height: 48px;
+}
+
+.comment-post-btn {
+  background-color: #065fd4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* Individual Comment */
 .comment {
   display: flex;
   gap: 12px;
-  padding: 12px 0;
+  padding: 16px 0;
   border-bottom: 1px solid #eee;
+}
+
+.comment:last-child {
+  border-bottom: none;
 }
 
 .comment-avatar {
@@ -80,61 +201,63 @@
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
+  margin-top: 4px;
 }
 
 .comment-body {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
-
 
 .comment-header {
   display: flex;
+  align-items: center;
   gap: 8px;
-  font-size: 0.9rem;
-  color: #555;
-  margin-bottom: 4px;
 }
 
-
 .comment-author {
-  font-weight: bold;
-  color: #222;
+  font-weight: 500;
+  color: #030303;
 }
 
 .comment-time {
-  color: #777;
+  font-size: 0.85rem;
+  color: #606060;
 }
 
 .comment-text {
   font-size: 0.95rem;
-  color: #333;
-  margin-bottom: 6px;
-  white-space: pre-wrap;
+  color: #030303;
+  line-height: 1.4;
 }
 
 .comment-actions {
   display: flex;
-  gap: 12px;
-  font-size: 0.85rem;
-  color: #666;
   align-items: center;
+  gap: 24px;
+  font-size: 0.85rem;
+  color: #606060;
+}
+
+.comment-likes {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .reply-btn {
   background: none;
   border: none;
   color: #065fd4;
-  cursor: pointer;
   font-weight: 500;
+  cursor: pointer;
   padding: 0;
 }
 
-
-
-.comment p {
-  margin: 4px 0;
-}
-
+/* Sidebar */
 .video-sidebar {
   flex: 1;
 }
