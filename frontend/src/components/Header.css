@@ -174,3 +174,18 @@
   border-radius: 50%;
   cursor: pointer;
 }
+
+.user-avatar-initials {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  user-select: none;
+  text-transform: uppercase;
+}

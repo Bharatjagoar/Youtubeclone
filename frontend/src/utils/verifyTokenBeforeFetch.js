@@ -27,7 +27,10 @@ export async function verifyTokenBeforeFetch() {
     return true;
   } catch (err) {
     console.error("Token verification failed:", err);
-    alert("Something went wrong. Please try again.");
+    if(localStorage.getItem("token")){
+      localStorage.clear()
+    }
+    // alert("Something went wrong. Please try again.");
     return false;
   }
 }

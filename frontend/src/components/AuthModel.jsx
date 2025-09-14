@@ -45,7 +45,7 @@ const AuthModal = ({ onClose }) => {
 
       if (isSignup) {
         payload.username = formData.username;
-        res = await fetch("http://localhost:5000/api/auth/signup", {
+        res = await fetch("http://localhost:5000/auth/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -62,12 +62,24 @@ const AuthModal = ({ onClose }) => {
 
       if (res.ok) {
         console.log(`✅ ${isSignup ? "Signup" : "Login"} successful:`, data);
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
 
-        dispatch(setLoginStatus(true)); // 🔥 update global login state
-        dispatch(closeAuthModal());     // optional: close modal via Redux
-        onClose();                      // close modal via prop
+        // ✅ Generate or reuse random avatar color
+        let storedUser = data.user;
+        let userWithColor = storedUser;
+
+        if (!storedUser.avatarColor) {
+          const randomHue = Math.floor(Math.random() * 360);
+          const randomColor = `hsl(${randomHue}, 70%, 50%)`; // bright random color
+          userWithColor = { ...storedUser, avatarColor: randomColor };
+        }
+
+        // ✅ Save user and token
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(userWithColor));
+
+        dispatch(setLoginStatus(true));
+        dispatch(closeAuthModal());
+        onClose();
       } else {
         setError(data.error || `${isSignup ? "Signup" : "Login"} failed`);
       }
@@ -76,6 +88,7 @@ const AuthModal = ({ onClose }) => {
       setError("Something went wrong. Please try again.");
     }
   };
+
 
   return (
     <div className="auth-overlay">
@@ -138,7 +151,7 @@ const AuthModal = ({ onClose }) => {
             {isSignup ? "Sign Up" : "Sign In"}
           </button>
         </form>
-        <p onClick={() => setIsSignup(!isSignup)}>
+        <p className="messageLink" onClick={() => setIsSignup(!isSignup)}>
           {isSignup ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
         </p>
       </div>

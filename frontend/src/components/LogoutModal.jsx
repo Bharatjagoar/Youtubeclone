@@ -2,15 +2,17 @@ import React from "react";
 import "./LogoutModal.css";
 import { useDispatch } from "react-redux";
 import { setLoginStatus } from "../redux/authSlice";
+import { useNavigate } from "react-router-dom";
 
 const LogoutModal = ({ onClose }) => {
   const dispatch = useDispatch();
-
+  const nav = useNavigate();
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     dispatch(setLoginStatus(false));
     onClose();
+    nav("/");
   };
 
   return (

@@ -140,3 +140,8 @@
 .avatar-label input {
   display: none;
 }
+
+.messageLink{
+  /* background-color: #000; */
+  margin-top: 20px;
+}

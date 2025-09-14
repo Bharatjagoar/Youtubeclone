@@ -6,6 +6,7 @@ const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
 export const fetchSearchResults = createAsyncThunk(
   "search/fetchSearchResults",
   async (query) => {
+    console.log(query);
     const searchRes = await axios.get(
       "https://www.googleapis.com/youtube/v3/search",
       {
