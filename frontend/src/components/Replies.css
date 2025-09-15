@@ -1,0 +1,60 @@
+/* Container for all actions */
+.comment-actions {
+    /* background-color: yellow; */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 0.875rem;
+}
+
+/* Base button style */
+.comment-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #555;
+  cursor: pointer;
+  transition: 
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+/* Hover state for all */
+.comment-actions button:hover {
+  background-color: #f5f5f5;
+  border-color: #ddd;
+  color: #222;
+}
+
+/* Specific hover on Edit */
+.comment-actions .edit-btn:hover {
+  background-color: #fff8e1;
+  border-color: #ffe082;
+  color: #f57c00;
+}
+
+/* Specific hover on Delete */
+.comment-actions .delete-btn:hover {
+  background-color: #ffebee;
+  border-color: #ffcdd2;
+  color: #c62828;
+}
+
+/* Icon sizing */
+.comment-actions svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Indent replies and add a subtle left border */
+.replies .comment.reply {
+  padding-left: 36px;
+  border-left: 2px solid #eee;
+  margin-top: 12px;
+}

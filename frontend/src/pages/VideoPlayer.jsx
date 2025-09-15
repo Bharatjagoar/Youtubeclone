@@ -5,7 +5,8 @@ import axios from "axios";
 import Replies from "../components/replies";
 import Avatar from "../components/Avatar";
 import "./VideoPlayer.css";
-import { formatCount,formatRelativeDate } from "../components/helperfunctions";
+import { FaEdit, FaTrash } from "react-icons/fa";
+import { formatCount, formatRelativeDate } from "../components/helperfunctions";
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
 
@@ -215,15 +216,22 @@ function VideoPlayer() {
               </div>
             </div>
 
-            {/* Comments */}
+
+            {/* comment section */}
             <div className="comments-section">
               <div className="comments-section-header">
-                <span className="comments-count">{comments.length.toLocaleString()} Comments</span>
-                <button className="comments-sort">Sort by</button>
+                <span className="comments-count">
+                  {comments.length.toLocaleString()} Comments
+                </span>
+                {/* <button className="comments-sort">Sort by</button> */}
               </div>
 
               <div className="add-comment">
-                <Avatar username={user?.username} avatarColor={user?.avatarColor} size={40} />
+                <Avatar
+                  username={user?.username}
+                  avatarColor={user?.avatarColor}
+                  size={40}
+                />
                 <textarea
                   className="comment-input"
                   placeholder="Add a public comment..."
@@ -237,23 +245,48 @@ function VideoPlayer() {
 
               {comments.map((comment) =>
                 comment.fromBackend ? (
-                  // ✅ Backend comment
                   <div key={comment._id} className="comment">
-                    <Avatar username={comment.author} avatarColor={comment.avatarColor} size={36} />
+                    <Avatar
+                      username={comment.author}
+                      avatarColor={comment.avatarColor}
+                      size={36}
+                    />
                     <div className="comment-body">
                       <div className="comment-header">
                         <span className="comment-author">{comment.author}</span>
-                        <span className="comment-time">{formatRelativeDate(comment.createdAt)}</span>
+                        <span className="comment-time">
+                          {formatRelativeDate(comment.createdAt)}
+                        </span>
                       </div>
                       <p className="comment-text">{comment.text}</p>
+
+                      {/* Comment actions (Reply + Edit + Delete) */}
                       <div className="comment-actions">
                         <button
                           className="reply-btn"
                           onClick={() =>
-                            setActiveReplyBox((prev) => (prev === comment._id ? null : comment._id))
+                            setActiveReplyBox((prev) =>
+                              prev === comment._id ? null : comment._id
+                            )
                           }
                         >
                           Reply
+                        </button>
+
+                        {/* Edit button */}
+                        <button
+                          className="edit-btn"
+                          onClick={() => console.log("Edit Comment:", comment._id)}
+                        >
+                          <FaEdit /> Edit
+                        </button>
+
+                        {/* Delete button */}
+                        <button
+                          className="delete-btn"
+                          onClick={() => console.log("Delete Comment:", comment._id)}
+                        >
+                          <FaTrash /> Delete
                         </button>
                       </div>
 
@@ -265,13 +298,15 @@ function VideoPlayer() {
                             value={replyText}
                             onChange={(e) => setReplyText(e.target.value)}
                           />
-                          <button className="reply-post-btn" onClick={() => handlePostReply(comment._id)}>
+                          <button
+                            className="reply-post-btn"
+                            onClick={() => handlePostReply(comment._id)}
+                          >
                             Post Reply
                           </button>
                         </div>
                       )}
 
-                      {/* ✅ Render replies recursively */}
                       <Replies
                         replies={comment.replies}
                         activeReplyBox={activeReplyBox}
@@ -283,7 +318,6 @@ function VideoPlayer() {
                     </div>
                   </div>
                 ) : (
-                  // ✅ YouTube API comment fallback
                   <div key={comment.id} className="comment">
                     <img
                       src={comment.snippet.topLevelComment.snippet.authorProfileImageUrl}
@@ -296,7 +330,9 @@ function VideoPlayer() {
                           {comment.snippet.topLevelComment.snippet.authorDisplayName}
                         </span>
                         <span className="comment-time">
-                          {formatRelativeDate(comment.snippet.topLevelComment.snippet.publishedAt)}
+                          {formatRelativeDate(
+                            comment.snippet.topLevelComment.snippet.publishedAt
+                          )}
                         </span>
                       </div>
                       <p className="comment-text">
@@ -304,7 +340,10 @@ function VideoPlayer() {
                       </p>
                       <div className="comment-actions">
                         <span className="comment-likes">
-                          {formatCount(comment.snippet.topLevelComment.snippet.likeCount)} likes
+                          {formatCount(
+                            comment.snippet.topLevelComment.snippet.likeCount
+                          )}{" "}
+                          likes
                         </span>
                       </div>
                     </div>
