@@ -1,7 +1,8 @@
 import Avatar from "./Avatar";
 import { formatRelativeDate } from "./helperfunctions";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import "./Replies.css"
+import axios from "axios";
+import "./Replies.css";
 
 export default function Replies({
   replies,
@@ -10,22 +11,53 @@ export default function Replies({
   replyText,
   setReplyText,
   handlePostReply,
+  setComments,
+  parentId,
 }) {
   if (!replies || replies.length === 0) return null;
+
+  const handleDeleteReply = async (replyId) => {
+    try {
+      // 1️⃣ delete from backend
+      console.log("Hello world from deleting")
+      await axios.delete(`http://localhost:5000/comments/${replyId}`);
+      console.log("Hello world after deleting")
+      // 2️⃣ update local state
+      setComments((prev) => 
+        prev.map((comment) => {
+          if (comment._id === parentId) {
+            return {
+              ...comment,
+              replies: comment.replies.filter((r) => r._id !== replyId),
+            };
+          }
+          return comment;
+        })
+      );
+    } catch (err) {
+      console.error("Error deleting reply:", err);
+    }
+  };
 
   return (
     <div className="replies">
       {replies.map((reply) => (
         <div key={reply._id} className="comment reply">
-          <Avatar username={reply.author} avatarColor={reply.avatarColor} size={28} />
+          <Avatar
+            username={reply.author}
+            avatarColor={reply.avatarColor}
+            size={28}
+          />
           <div className="comment-body">
             <div className="comment-header">
               <span className="comment-author">{reply.author}</span>
-              <span className="comment-time">{formatRelativeDate(reply.createdAt)}</span>
+              <span className="comment-time">
+                {formatRelativeDate(reply.createdAt)}
+              </span>
             </div>
             <p className="comment-text">{reply.text}</p>
 
-            {/* Actions for replies */}
+            {/* Actions */}
             <div className="comment-actions">
               <button
                 className="reply-btn"
@@ -45,7 +77,7 @@ export default function Replies({
 
               <button
                 className="delete-btn"
-                onClick={() => console.log("Delete Reply:", reply._id)}
+                onClick={() => handleDeleteReply(reply._id)}
               >
                 <FaTrash /> Delete
               </button>
@@ -68,7 +100,7 @@ export default function Replies({
               </div>
             )}
 
-            {/* Recursive replies */}
+            {/* Recursive rendering of nested replies */}
             <Replies
               replies={reply.replies}
               activeReplyBox={activeReplyBox}
@@ -76,6 +108,8 @@ export default function Replies({
               replyText={replyText}
               setReplyText={setReplyText}
               handlePostReply={handlePostReply}
+              setComments={setComments}
+              parentId={parentId} // keep passing down
             />
           </div>
         </div>

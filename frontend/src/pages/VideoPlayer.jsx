@@ -314,6 +314,8 @@ function VideoPlayer() {
                         replyText={replyText}
                         setReplyText={setReplyText}
                         handlePostReply={handlePostReply}
+                        setComments={setComments}   // 👈 pass this down
+                        parentId={comment._id}      // 👈 so we know which comment the reply belongs to
                       />
                     </div>
                   </div>
