@@ -1,13 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const {
-  postComment,
-  replyToComment,
-  getCommentsByVideoId,
-} = require("../controllers/commentController");
+const commentController = require("../controllers/commentController");
 
-router.post("/", postComment);
-router.post("/reply/:parentId", replyToComment);
-router.get("/:videoId", getCommentsByVideoId); // ✅ NEW
+router.post("/", commentController.postComment); // post top-level comment
+router.post("/:parentId/replies", commentController.replyToComment); // post reply
+router.get("/video/:videoId", commentController.getCommentsByVideoId); // get all top-level comments with replies
 
 module.exports = router;

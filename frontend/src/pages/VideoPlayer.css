@@ -309,3 +309,44 @@
   font-size: 0.85rem;
   color: #666;
 }
+
+
+/* --- Reply Box --- */
+.reply-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 0 48px; /* indent to align under comment text */
+}
+
+.reply-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  resize: none;
+  height: 40px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.reply-input:focus {
+  border-color: #065fd4;
+}
+
+.reply-post-btn {
+  align-self: flex-end;
+  background-color: #065fd4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.reply-post-btn:hover {
+  background-color: #054bb8;
+}
