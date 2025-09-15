@@ -350,3 +350,27 @@
 .reply-post-btn:hover {
   background-color: #054bb8;
 }
+
+
+.reply-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.reply-cancel-btn {
+  background: transparent;
+  border: none;
+  color: #606060;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 6px 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.reply-cancel-btn:hover {
+  background-color: #f1f1f1;
+  color: #030303;
+}

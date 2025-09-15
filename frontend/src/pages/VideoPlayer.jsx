@@ -24,9 +24,13 @@ function VideoPlayer() {
   const [subscriberCountUI, setSubscriberCountUI] = useState(0);
   const [newComment, setNewComment] = useState("");
 
+
   const [user, setUser] = useState(null);
   const [activeReplyBox, setActiveReplyBox] = useState(null);
   const [replyText, setReplyText] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editedCommentText, setEditedCommentText] = useState("");
+
 
   useEffect(() => {
     try {
@@ -169,6 +173,57 @@ function VideoPlayer() {
     }
   };
 
+  // closes any open reply box and clears the reply input
+  const closeReplyBox = () => {
+    setActiveReplyBox(null);
+    setReplyText("");
+  };
+
+
+  const deleteCommentById = async (commentId) => {
+    try {
+      const res = await axios.delete(`http://localhost:5000/comments/${commentId}`);
+      if (!res.data) throw new Error("No response from server");
+      return res.data;
+    } catch (err) {
+      console.error("Failed to delete comment:", err);
+      throw err;
+    }
+  };
+
+  const handleEditComment = (commentId, currentText) => {
+    setEditingCommentId(commentId);
+    setEditedCommentText(currentText);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditedCommentText("");
+  };
+
+  const handleSaveEdit = async (commentId) => {
+    const trimmed = editedCommentText.trim();
+    if (!trimmed) return;
+
+    try {
+      const { data: updated } = await axios.put(
+        `http://localhost:5000/comments/${commentId}`,
+        { text: trimmed }
+      );
+
+      setComments((prev) =>
+        prev.map((c) =>
+          c._id === commentId ? { ...c, text: updated.text } : c
+        )
+      );
+
+      setEditingCommentId(null);
+      setEditedCommentText("");
+    } catch (err) {
+      console.error("Error updating comment:", err);
+    }
+  };
+
   return (
     <div className="video-player-wrapper">
       <div className="video-player-main">
@@ -258,9 +313,34 @@ function VideoPlayer() {
                           {formatRelativeDate(comment.createdAt)}
                         </span>
                       </div>
-                      <p className="comment-text">{comment.text}</p>
 
-                      {/* Comment actions (Reply + Edit + Delete) */}
+                      {editingCommentId === comment._id ? (
+                        <div className="edit-box">
+                          <textarea
+                            className="comment-input"
+                            value={editedCommentText}
+                            onChange={(e) => setEditedCommentText(e.target.value)}
+                          />
+                          <div className="edit-actions">
+                            <button
+                              className="comment-post-btn"
+                              onClick={() => handleSaveEdit(comment._id)}
+                            >
+                              Save
+                            </button>
+                            <button
+                              className="comment-post-btn"
+                              onClick={handleCancelEdit}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="comment-text">{comment.text}</p>
+                      )}
+
+
                       <div className="comment-actions">
                         <button
                           className="reply-btn"
@@ -273,18 +353,25 @@ function VideoPlayer() {
                           Reply
                         </button>
 
-                        {/* Edit button */}
                         <button
                           className="edit-btn"
-                          onClick={() => console.log("Edit Comment:", comment._id)}
+                          onClick={() => handleEditComment(comment._id, comment.text)}
                         >
                           <FaEdit /> Edit
                         </button>
 
-                        {/* Delete button */}
                         <button
                           className="delete-btn"
-                          onClick={() => console.log("Delete Comment:", comment._id)}
+                          onClick={async () => {
+                            try {
+                              await deleteCommentById(comment._id);
+                              setComments((prev) =>
+                                prev.filter((c) => c._id !== comment._id)
+                              );
+                            } catch (err) {
+                              alert("Failed to delete comment.");
+                            }
+                          }}
                         >
                           <FaTrash /> Delete
                         </button>
@@ -298,14 +385,27 @@ function VideoPlayer() {
                             value={replyText}
                             onChange={(e) => setReplyText(e.target.value)}
                           />
-                          <button
-                            className="reply-post-btn"
-                            onClick={() => handlePostReply(comment._id)}
-                          >
-                            Post Reply
-                          </button>
+                          <div className="reply-actions">
+                            <button
+                              type="button"
+                              className="reply-post-btn"
+                              onClick={() => handlePostReply(comment._id)}
+                            >
+                              Post Reply
+                            </button>
+
+                            {/* Cancel / Close button */}
+                            <button
+                              type="button"
+                              className="reply-cancel-btn"
+                              onClick={closeReplyBox}
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
                       )}
+
 
                       <Replies
                         replies={comment.replies}
@@ -314,8 +414,8 @@ function VideoPlayer() {
                         replyText={replyText}
                         setReplyText={setReplyText}
                         handlePostReply={handlePostReply}
-                        setComments={setComments}   // 👈 pass this down
-                        parentId={comment._id}      // 👈 so we know which comment the reply belongs to
+                        setComments={setComments}
+                        parentId={comment._id}
                       />
                     </div>
                   </div>

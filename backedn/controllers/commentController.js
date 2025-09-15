@@ -96,3 +96,31 @@ exports.deleteCommentWithReplies = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+// Update comment text
+exports.updateCommentText = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const { text } = req.body;
+
+    if (!text || text.trim() === "") {
+      return res.status(400).json({ error: "Comment text cannot be empty." });
+    }
+
+    const updated = await Comment.findByIdAndUpdate(
+      commentId,
+      { text },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: "Comment not found." });
+    }
+
+    res.status(200).json(updated);
+  } catch (err) {
+    console.error("Error updating comment:", err);
+    res.status(500).json({ error: err.message });
+  }
+};

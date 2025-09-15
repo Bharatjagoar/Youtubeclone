@@ -1,6 +1,7 @@
+import { useState } from "react";
 import Avatar from "./Avatar";
 import { formatRelativeDate } from "./helperfunctions";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaSave, FaTimes } from "react-icons/fa";
 import axios from "axios";
 import "./Replies.css";
 
@@ -14,16 +15,15 @@ export default function Replies({
   setComments,
   parentId,
 }) {
+  const [editingReplyId, setEditingReplyId] = useState(null);
+  const [editedText, setEditedText] = useState("");
+
   if (!replies || replies.length === 0) return null;
 
   const handleDeleteReply = async (replyId) => {
     try {
-      // 1️⃣ delete from backend
-      console.log("Hello world from deleting")
       await axios.delete(`http://localhost:5000/comments/${replyId}`);
-      console.log("Hello world after deleting")
-      // 2️⃣ update local state
-      setComments((prev) => 
+      setComments((prev) =>
         prev.map((comment) => {
           if (comment._id === parentId) {
             return {
@@ -36,6 +36,47 @@ export default function Replies({
       );
     } catch (err) {
       console.error("Error deleting reply:", err);
+    }
+  };
+
+  const handleEditReply = (replyId, currentText) => {
+    setEditingReplyId(replyId);
+    setEditedText(currentText);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReplyId(null);
+    setEditedText("");
+  };
+
+  const handleSaveEdit = async (replyId) => {
+    const trimmed = editedText.trim();
+    if (!trimmed) return;
+
+    try {
+      const { data: updated } = await axios.put(
+        `http://localhost:5000/comments/${replyId}`,
+        { text: trimmed }
+      );
+
+      setComments((prev) =>
+        prev.map((comment) => {
+          if (comment._id === parentId) {
+            return {
+              ...comment,
+              replies: comment.replies.map((r) =>
+                r._id === replyId ? { ...r, text: updated.text } : r
+              ),
+            };
+          }
+          return comment;
+        })
+      );
+
+      setEditingReplyId(null);
+      setEditedText("");
+    } catch (err) {
+      console.error("Error updating reply:", err);
     }
   };
 
@@ -55,14 +96,37 @@ export default function Replies({
                 {formatRelativeDate(reply.createdAt)}
               </span>
             </div>
-            <p className="comment-text">{reply.text}</p>
 
-            {/* Actions */}
+            {editingReplyId === reply._id ? (
+              <div className="edit-box">
+                <textarea
+                  className="reply-input"
+                  value={editedText}
+                  onChange={(e) => setEditedText(e.target.value)}
+                />
+                <div className="edit-actions">
+                  <button
+                    className="save-btn"
+                    onClick={() => handleSaveEdit(reply._id)}
+                  >
+                    <FaSave /> Save
+                  </button>
+                  <button className="cancel-btn" onClick={handleCancelEdit}>
+                    <FaTimes /> Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="comment-text">{reply.text}</p>
+            )}
+
             <div className="comment-actions">
               <button
                 className="reply-btn"
                 onClick={() =>
-                  setActiveReplyBox((prev) => (prev === reply._id ? null : reply._id))
+                  setActiveReplyBox((prev) =>
+                    prev === reply._id ? null : reply._id
+                  )
                 }
               >
                 Reply
@@ -70,7 +134,7 @@ export default function Replies({
 
               <button
                 className="edit-btn"
-                onClick={() => console.log("Edit Reply:", reply._id)}
+                onClick={() => handleEditReply(reply._id, reply.text)}
               >
                 <FaEdit /> Edit
               </button>
@@ -91,16 +155,27 @@ export default function Replies({
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                 />
-                <button
-                  className="reply-post-btn"
-                  onClick={() => handlePostReply(reply._id)}
-                >
-                  Post Reply
-                </button>
+                <div className="reply-actions">
+                  <button
+                    className="reply-post-btn"
+                    onClick={() => handlePostReply(reply._id)}
+                  >
+                    Post Reply
+                  </button>
+                  <button
+                    className="reply-cancel-btn"
+                    onClick={() => {
+                      setActiveReplyBox(null);
+                      setReplyText("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
 
-            {/* Recursive rendering of nested replies */}
+
             <Replies
               replies={reply.replies}
               activeReplyBox={activeReplyBox}
@@ -109,7 +184,7 @@ export default function Replies({
               setReplyText={setReplyText}
               handlePostReply={handlePostReply}
               setComments={setComments}
-              parentId={parentId} // keep passing down
+              parentId={parentId}
             />
           </div>
         </div>
