@@ -6,7 +6,8 @@ import Replies from "../components/replies";
 import Avatar from "../components/Avatar";
 import "./VideoPlayer.css";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import { formatCount, formatRelativeDate } from "../components/helperfunctions";
+import { formatCount, formatRelativeDate,cleanText} from "../components/helperfunctions";
+import RelatedVideos from "../components/RelatedVideos";
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
 
@@ -17,13 +18,12 @@ function VideoPlayer() {
   const [videoDetails, setVideoDetails] = useState(null);
   const [channelDetails, setChannelDetails] = useState(null);
   const [comments, setComments] = useState([]);
-  const [relatedVideos, setRelatedVideos] = useState([]);
   const [descExpanded, setDescExpanded] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCountUI, setLikeCountUI] = useState(0);
   const [subscriberCountUI, setSubscriberCountUI] = useState(0);
   const [newComment, setNewComment] = useState("");
-
+  const [Relatedquery,setRelatedquery]=useState("");
 
   const [user, setUser] = useState(null);
   const [activeReplyBox, setActiveReplyBox] = useState(null);
@@ -61,6 +61,8 @@ function VideoPlayer() {
           params: { part: "snippet,statistics", id: videoId, key: API_KEY },
         });
         const vid = vidRes.data.items[0];
+        console.log("this is video detaills :: ",cleanText(vid.snippet.title));
+        setRelatedquery(cleanText(vid.snippet.title));
         setVideoDetails(vid);
 
         // ✅ Fetch channel details
@@ -90,32 +92,7 @@ function VideoPlayer() {
           setComments(comRes.data.items.map((c) => ({ ...c, fromBackend: false })));
         }
 
-        // ✅ Fetch related videos
-        const relRes = await axios.get("https://www.googleapis.com/youtube/v3/search", {
-          params: {
-            part: "snippet",
-            relatedToVideoId: videoId,
-            type: "video",
-            maxResults: 15,
-            key: API_KEY,
-          },
-        });
-
-        const ids = relRes.data.items.map((i) => i.id.videoId).filter(Boolean);
-        if (ids.length > 0) {
-          const relDet = await axios.get("https://www.googleapis.com/youtube/v3/videos", {
-            params: { part: "snippet,statistics", id: ids.join(","), key: API_KEY },
-          });
-          setRelatedVideos(
-            relDet.data.items.map((v) => ({
-              id: v.id,
-              title: v.snippet.title,
-              thumbnail: v.snippet.thumbnails.medium.url,
-              channel: v.snippet.channelTitle,
-              views: v.statistics.viewCount,
-            }))
-          );
-        }
+        
       } catch (e) {
         console.error("Error fetching video data:", e);
       }
@@ -230,7 +207,7 @@ function VideoPlayer() {
         <iframe
           width="100%"
           height="480"
-          src={`https://www.youtube.com/embed/${videoId}`}
+          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`}
           frameBorder="0"
           allow="autoplay; encrypted-media"
           allowFullScreen
@@ -458,21 +435,7 @@ function VideoPlayer() {
       </div>
 
       <aside className="video-sidebar">
-        <h4>Up Next</h4>
-        {relatedVideos.length === 0 ? (
-          <p>No related videos found.</p>
-        ) : (
-          relatedVideos.map((v) => (
-            <div key={v.id} className="sidebar-card" onClick={() => navigate(`/video/${v.id}`)}>
-              <img src={v.thumbnail} alt={v.title} />
-              <div>
-                <p className="sidebar-title">{v.title}</p>
-                <p className="sidebar-channel">{v.channel}</p>
-                <p className="sidebar-views">{parseInt(v.views).toLocaleString()} views</p>
-              </div>
-            </div>
-          ))
-        )}
+        <RelatedVideos query={Relatedquery}/>
       </aside>
     </div>
   );

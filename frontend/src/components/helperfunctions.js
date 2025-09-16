@@ -24,4 +24,15 @@ const formatRelativeDate = (dateString) => {
   return "Just now";
 };
 
-export {formatCount,formatRelativeDate};
+function cleanText(text) {
+  // Regular expression to match hashtags and a broad range of emojis
+  // It matches words starting with # and common Unicode emoji ranges.
+  const emojiAndHashtagRegex = /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udf00-\udfff]|\ud83d[\udc00-\ude4f]|\ud83e[\udc00-\udfff])|#\w+/g;
+
+  // Replace all matches with an empty string
+  const cleanedText = text.replace(emojiAndHashtagRegex, '').trim();
+
+  return cleanedText;
+}
+
+export {formatCount,formatRelativeDate,cleanText};
