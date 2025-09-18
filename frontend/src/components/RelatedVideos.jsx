@@ -1,30 +1,33 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-
+import { cleanText } from "./helperfunctions";
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
 function RelatedVideos({ query }) {
     const { videoId } = useParams(); // automatically get current videoId
     const navigate = useNavigate();
-
+    const [searchquery,setsearchquery]=useState(cleanText(query));
     const [relatedVideos, setRelatedVideos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        
         const fetchRelatedVideos = async () => {
             try {
                 setLoading(true);
                 setError(null);
-
+                console.log(query);
+                console.log("hellow", searchquery)
+                // fdsa
                 // Step 1: Search related videos by videoId
                 const relRes = await axios.get("https://www.googleapis.com/youtube/v3/search", {
                     params: {
                         part: "snippet",
-                        q: query,         // 🔍 This is your search term
+                        q: cleanText(query),         // 🔍 This is your search term
                         type: "video",          // Only return videos
-                        maxResults: 15,
+                        maxResults: 50,
                         key: API_KEY,
                     },
                 });
@@ -63,7 +66,7 @@ function RelatedVideos({ query }) {
         };
 
         fetchRelatedVideos();
-    }, [videoId]);
+    }, [videoId,query]);
 
     if (loading) return <p className="text-gray-500">Loading related videos...</p>;
     if (error) return <p className="text-red-500">{error}</p>;

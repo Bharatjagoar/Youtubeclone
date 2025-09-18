@@ -62,7 +62,7 @@ function VideoPlayer() {
         });
         const vid = vidRes.data.items[0];
         console.log("this is video detaills :: ",cleanText(vid.snippet.title));
-        setRelatedquery(cleanText(vid.snippet.title));
+        setRelatedquery(vid.snippet.title);
         setVideoDetails(vid);
 
         // ✅ Fetch channel details
