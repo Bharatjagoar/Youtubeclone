@@ -137,9 +137,6 @@
   transition: transform 0.2s ease;
 }
 
-.video-card:hover {
-  transform: scale(1.02);
-}
 
 .video-thumb {
   width: 100%;
