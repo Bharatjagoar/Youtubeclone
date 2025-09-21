@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+// src/pages/ChannelPage.jsx
+
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./ChannelPage.css";
 import {
@@ -14,13 +16,22 @@ function truncate(text, maxLength = 200) {
 
 function ChannelPage() {
   const { channelId } = useParams();
-  const [channelData, setChannelData] = useState(null);
-  const [videos, setVideos] = useState([]);
+  const navigate = useNavigate();
   const ApiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
 
+  const [channelData, setChannelData] = useState(null);
+  const [videos, setVideos] = useState([]);
+  const [nextPageToken, setNextPageToken] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const sentinelRef = useRef(null);
+
+  // 1. Fetch channel info + initial videos
   useEffect(() => {
     async function fetchChannelInfo() {
+      setIsLoading(true);
       try {
+        // Channel metadata
         const channelRes = await axios.get(
           "https://www.googleapis.com/youtube/v3/channels",
           {
@@ -31,13 +42,12 @@ function ChannelPage() {
             },
           }
         );
-
         const channel = channelRes.data.items[0];
         setChannelData(channel);
 
+        // Initial videos batch
         const uploadsPlaylistId =
           channel.contentDetails.relatedPlaylists.uploads;
-
         const videosRes = await axios.get(
           "https://www.googleapis.com/youtube/v3/playlistItems",
           {
@@ -49,56 +59,129 @@ function ChannelPage() {
             },
           }
         );
-
         setVideos(videosRes.data.items);
+        setNextPageToken(videosRes.data.nextPageToken || null);
       } catch (err) {
         console.error("Error fetching channel data:", err);
+      } finally {
+        setIsLoading(false);
       }
     }
 
     fetchChannelInfo();
-  }, [channelId]);
+  }, [channelId, ApiKey]);
 
-  if (!channelData) return <div>Loading...</div>;
+  // 2. Fetch more videos when sentinel is visible
+  const loadMore = useCallback(async () => {
+    if (!nextPageToken || isLoading) return;
+    setIsLoading(true);
+    try {
+      const videosRes = await axios.get(
+        "https://www.googleapis.com/youtube/v3/playlistItems",
+        {
+          params: {
+            part: "snippet",
+            playlistId: channelData.contentDetails.relatedPlaylists.uploads,
+            maxResults: 12,
+            pageToken: nextPageToken,
+            key: ApiKey,
+          },
+        }
+      );
+      setVideos((prev) => [...prev, ...videosRes.data.items]);
+      setNextPageToken(videosRes.data.nextPageToken || null);
+    } catch (err) {
+      console.error("Error loading more videos:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [ApiKey, channelData, isLoading, nextPageToken]);
+
+  // 3. IntersectionObserver to trigger loadMore
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinelRef.current);
+
+    return () => observer.disconnect();
+  }, [loadMore]);
+
+  if (!channelData) return <div className="loading">Loading channel…</div>;
 
   const { snippet, statistics, brandingSettings } = channelData;
 
+  const handleChannelClick = () => {
+    navigate(`/channel/${channelId}`);
+  };
+
   return (
     <div className="channel-page">
-      <div className="banner">
-        <img src={brandingSettings?.image?.bannerExternalUrl} alt="Banner" />
-      </div>
+      {brandingSettings?.image?.bannerExternalUrl && (
+        <div className="banner">
+          <img
+            src={brandingSettings.image.bannerExternalUrl}
+            alt="Channel Banner"
+          />
+        </div>
+      )}
 
       <div className="channel-header">
-        <img
-          className="avatar"
-          src={snippet.thumbnails.default.url}
-          alt="Avatar"
-        />
-        <div className="channel-info">
-          <h2>{snippet.title}</h2>
-          <p>
-            {formatCount(statistics.subscriberCount)} subscribers •{" "}
-            {formatCount(statistics.videoCount)} videos
-          </p>
-          <p className="channel-description">
-            {truncate(cleanText(snippet.description))}
-          </p>
+        <div
+          className="channel-left"
+          onClick={handleChannelClick}
+          style={{ cursor: "pointer" }}
+        >
+          <img
+            className="avatar"
+            src={snippet.thumbnails.default.url}
+            alt={`${snippet.title} avatar`}
+          />
+          <div className="channel-meta">
+            <h2 className="channel-title">{snippet.title}</h2>
+            <p className="channel-stats">
+              {formatCount(statistics.subscriberCount)} subscribers •{" "}
+              {formatCount(statistics.videoCount)} videos
+            </p>
+            <p className="channel-description">
+              {truncate(cleanText(snippet.description))}
+            </p>
+          </div>
         </div>
+
         <button className="subscribe-btn">Subscribe</button>
       </div>
 
       <div className="video-grid">
         {videos.map((item) => {
           const video = item.snippet;
+          const vidId = video.resourceId.videoId;
+
           return (
-            <div key={video.resourceId.videoId} className="video-card">
+            <div
+              key={vidId}
+              className="video-card"
+              onClick={() => navigate(`/video/${vidId}`)}
+              style={{ cursor: "pointer" }}
+            >
               <img src={video.thumbnails.medium.url} alt={video.title} />
               <h4>{video.title}</h4>
               <p>{formatRelativeDate(video.publishedAt)}</p>
             </div>
           );
         })}
+      </div>
+
+      {/* Sentinel div: triggers loading more when it scrolls into view */}
+      <div ref={sentinelRef} className="sentinel">
+        {isLoading && <p>Loading more videos…</p>}
+        {!nextPageToken && !isLoading && <p>No more videos</p>}
       </div>
     </div>
   );

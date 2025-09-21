@@ -1,37 +1,43 @@
+// pages/VideoPlayer.jsx - REFACTORED VERSION
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaThumbsUp } from "react-icons/fa";
 import axios from "axios";
-import Replies from "../components/replies";
-import Avatar from "../components/Avatar";
-import "./VideoPlayer.css";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import { formatCount, formatRelativeDate,cleanText} from "../components/helperfunctions";
+import VideoInfo from "../components/VideoInfo";
+import AddComment from "../components/AddComment";
+import CommentsList from "../components/CommentsList";
 import RelatedVideos from "../components/RelatedVideos";
-const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+import { cleanText } from "../components/helperfunctions";
+import "./VideoPlayer.css";
 
+const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
 function VideoPlayer() {
   const { videoId } = useParams();
   const navigate = useNavigate();
 
+  // Video & Channel State
   const [videoDetails, setVideoDetails] = useState(null);
   const [channelDetails, setChannelDetails] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [descExpanded, setDescExpanded] = useState(false);
+  const [Relatedquery, setRelatedquery] = useState("");
+
+  // Video Interaction State
   const [liked, setLiked] = useState(false);
   const [likeCountUI, setLikeCountUI] = useState(0);
   const [subscriberCountUI, setSubscriberCountUI] = useState(0);
-  const [newComment, setNewComment] = useState("");
-  const [Relatedquery,setRelatedquery]=useState("");
+  const [descExpanded, setDescExpanded] = useState(false);
 
-  const [user, setUser] = useState(null);
+  // Comments State
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState("");
   const [activeReplyBox, setActiveReplyBox] = useState(null);
   const [replyText, setReplyText] = useState("");
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editedCommentText, setEditedCommentText] = useState("");
 
+  // User State
+  const [user, setUser] = useState(null);
 
+  // Load user on mount
   useEffect(() => {
     try {
       const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -41,6 +47,7 @@ function VideoPlayer() {
     }
   }, []);
 
+  // Update UI counts when video/channel details change
   useEffect(() => {
     if (videoDetails) {
       setLikeCountUI(Number(videoDetails.statistics.likeCount || 0));
@@ -53,25 +60,25 @@ function VideoPlayer() {
     }
   }, [channelDetails]);
 
+  // Fetch all data when videoId changes
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // ✅ Fetch video details
+        // Fetch video details
         const vidRes = await axios.get("https://www.googleapis.com/youtube/v3/videos", {
           params: { part: "snippet,statistics", id: videoId, key: API_KEY },
         });
         const vid = vidRes.data.items[0];
-        console.log("this is video detaills :: ",cleanText(vid.snippet.title));
         setRelatedquery(vid.snippet.title);
         setVideoDetails(vid);
 
-        // ✅ Fetch channel details
+        // Fetch channel details
         const chRes = await axios.get("https://www.googleapis.com/youtube/v3/channels", {
           params: { part: "snippet,statistics", id: vid.snippet.channelId, key: API_KEY },
         });
         setChannelDetails(chRes.data.items[0]);
 
-        // ✅ Fetch comments (backend or fallback)
+        // Fetch comments (backend or fallback)
         try {
           const backendComments = await axios.get(`http://localhost:5000/comments/video/${videoId}`);
           if (backendComments.data && backendComments.data.length > 0) {
@@ -91,8 +98,6 @@ function VideoPlayer() {
           });
           setComments(comRes.data.items.map((c) => ({ ...c, fromBackend: false })));
         }
-
-        
       } catch (e) {
         console.error("Error fetching video data:", e);
       }
@@ -101,6 +106,7 @@ function VideoPlayer() {
     fetchData();
   }, [videoId]);
 
+  // Video interaction handlers
   const handleLike = () => {
     setLiked((prev) => !prev);
     setLikeCountUI((prev) => (liked ? prev - 1 : prev + 1));
@@ -108,9 +114,17 @@ function VideoPlayer() {
 
   const handleSubscribe = () => setSubscriberCountUI((p) => p + 1);
 
+  const handleChannelClick = () => {
+    if (channelDetails) {
+      navigate(`/channel/${channelDetails.id}`);
+    }
+  };
+
+  // Comment handlers
   const handlePostComment = async () => {
     const text = newComment.trim();
     if (!text) return;
+    
     try {
       const storedUser = JSON.parse(localStorage.getItem("user"));
       const { data: saved } = await axios.post("http://localhost:5000/comments", {
@@ -128,9 +142,14 @@ function VideoPlayer() {
     }
   };
 
+  const handleReplyToggle = (commentId) => {
+    setActiveReplyBox((prev) => (prev === commentId ? null : commentId));
+  };
+
   const handlePostReply = async (parentId) => {
     const text = replyText.trim();
     if (!text) return;
+    
     try {
       const storedUser = JSON.parse(localStorage.getItem("user"));
       await axios.post(`http://localhost:5000/comments/${parentId}/replies`, {
@@ -142,7 +161,8 @@ function VideoPlayer() {
 
       setReplyText("");
       setActiveReplyBox(null);
-      // ⚡ Refresh comments from backend so replies show up
+      
+      // Refresh comments from backend so replies show up
       const backendComments = await axios.get(`http://localhost:5000/comments/video/${videoId}`);
       setComments(backendComments.data.map((saved) => ({ ...saved, fromBackend: true })));
     } catch (err) {
@@ -150,22 +170,9 @@ function VideoPlayer() {
     }
   };
 
-  // closes any open reply box and clears the reply input
-  const closeReplyBox = () => {
+  const handleCloseReplyBox = () => {
     setActiveReplyBox(null);
     setReplyText("");
-  };
-
-
-  const deleteCommentById = async (commentId) => {
-    try {
-      const res = await axios.delete(`http://localhost:5000/comments/${commentId}`);
-      if (!res.data) throw new Error("No response from server");
-      return res.data;
-    } catch (err) {
-      console.error("Failed to delete comment:", err);
-      throw err;
-    }
   };
 
   const handleEditComment = (commentId, currentText) => {
@@ -201,241 +208,66 @@ function VideoPlayer() {
     }
   };
 
+  const handleDeleteComment = async (commentId) => {
+    try {
+      const res = await axios.delete(`http://localhost:5000/comments/${commentId}`);
+      if (!res.data) throw new Error("No response from server");
+      
+      setComments((prev) => prev.filter((c) => c._id !== commentId));
+    } catch (err) {
+      console.error("Failed to delete comment:", err);
+      alert("Failed to delete comment.");
+    }
+  };
+  console.log(channelDetails);
   return (
     <div className="video-player-wrapper">
       <div className="video-player-main">
-        <iframe
-          width="100%"
-          height="480"
-          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`}
-          frameBorder="0"
-          allow="autoplay; encrypted-media"
-          allowFullScreen
-          title="YouTube Video"
+        <VideoInfo
+          videoId={videoId}
+          videoDetails={videoDetails}
+          channelDetails={channelDetails}
+          liked={liked}
+          likeCountUI={likeCountUI}
+          subscriberCountUI={subscriberCountUI}
+          descExpanded={descExpanded}
+          onLike={handleLike}
+          onSubscribe={handleSubscribe}
+          onChannelClick={handleChannelClick}
+          onDescToggle={() => setDescExpanded((p) => !p)}
         />
-        {videoDetails && channelDetails && (
-          <>
-            <div className="video-meta">
-              <h2>{videoDetails.snippet.title}</h2>
-              <div className="channel-info">
-                <img src={channelDetails.snippet.thumbnails.default.url} alt={channelDetails.snippet.title} />
-                <div>
-                  <p>{channelDetails.snippet.title}</p>
-                  <p>{formatCount(subscriberCountUI)} subscribers</p>
-                </div>
-                <button className="subscribe-btn" onClick={handleSubscribe}>
-                  Subscribe
-                </button>
-              </div>
-              <div className="video-stats">
-                <span>{formatCount(videoDetails.statistics.viewCount)} views</span>
-                <span className="dot">•</span>
-                <button className={`like-btn ${liked ? "liked" : ""}`} onClick={handleLike}>
-                  <FaThumbsUp className="like-icon" />
-                  <span className="like-count">{formatCount(likeCountUI)}</span>
-                </button>
-                <span className="dot">•</span>
-                <span>{formatRelativeDate(videoDetails.snippet.publishedAt)}</span>
-              </div>
 
-              <div className="description-box">
-                <div className={`desc-content ${descExpanded ? "expanded" : ""}`}>
-                  {videoDetails.snippet.description}
-                </div>
-                <button className="desc-toggle-btn" onClick={() => setDescExpanded((p) => !p)}>
-                  {descExpanded ? "Show less" : "Show more"}
-                </button>
-              </div>
-            </div>
+        <AddComment
+          user={user}
+          newComment={newComment}
+          onCommentChange={setNewComment}
+          onPostComment={handlePostComment}
+        />
 
-
-            {/* comment section */}
-            <div className="comments-section">
-              <div className="comments-section-header">
-                <span className="comments-count">
-                  {comments.length.toLocaleString()} Comments
-                </span>
-                {/* <button className="comments-sort">Sort by</button> */}
-              </div>
-
-              <div className="add-comment">
-                <Avatar
-                  username={user?.username}
-                  avatarColor={user?.avatarColor}
-                  size={40}
-                />
-                <textarea
-                  className="comment-input"
-                  placeholder="Add a public comment..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                />
-                <button className="comment-post-btn" onClick={handlePostComment}>
-                  Comment
-                </button>
-              </div>
-
-              {comments.map((comment) =>
-                comment.fromBackend ? (
-                  <div key={comment._id} className="comment">
-                    <Avatar
-                      username={comment.author}
-                      avatarColor={comment.avatarColor}
-                      size={36}
-                    />
-                    <div className="comment-body">
-                      <div className="comment-header">
-                        <span className="comment-author">{comment.author}</span>
-                        <span className="comment-time">
-                          {formatRelativeDate(comment.createdAt)}
-                        </span>
-                      </div>
-
-                      {editingCommentId === comment._id ? (
-                        <div className="edit-box">
-                          <textarea
-                            className="comment-input"
-                            value={editedCommentText}
-                            onChange={(e) => setEditedCommentText(e.target.value)}
-                          />
-                          <div className="edit-actions">
-                            <button
-                              className="comment-post-btn"
-                              onClick={() => handleSaveEdit(comment._id)}
-                            >
-                              Save
-                            </button>
-                            <button
-                              className="comment-post-btn"
-                              onClick={handleCancelEdit}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="comment-text">{comment.text}</p>
-                      )}
-
-
-                      <div className="comment-actions">
-                        <button
-                          className="reply-btn"
-                          onClick={() =>
-                            setActiveReplyBox((prev) =>
-                              prev === comment._id ? null : comment._id
-                            )
-                          }
-                        >
-                          Reply
-                        </button>
-
-                        <button
-                          className="edit-btn"
-                          onClick={() => handleEditComment(comment._id, comment.text)}
-                        >
-                          <FaEdit /> Edit
-                        </button>
-
-                        <button
-                          className="delete-btn"
-                          onClick={async () => {
-                            try {
-                              await deleteCommentById(comment._id);
-                              setComments((prev) =>
-                                prev.filter((c) => c._id !== comment._id)
-                              );
-                            } catch (err) {
-                              alert("Failed to delete comment.");
-                            }
-                          }}
-                        >
-                          <FaTrash /> Delete
-                        </button>
-                      </div>
-
-                      {activeReplyBox === comment._id && (
-                        <div className="reply-box">
-                          <textarea
-                            className="reply-input"
-                            placeholder="Reply..."
-                            value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
-                          />
-                          <div className="reply-actions">
-                            <button
-                              type="button"
-                              className="reply-post-btn"
-                              onClick={() => handlePostReply(comment._id)}
-                            >
-                              Post Reply
-                            </button>
-
-                            {/* Cancel / Close button */}
-                            <button
-                              type="button"
-                              className="reply-cancel-btn"
-                              onClick={closeReplyBox}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-
-                      <Replies
-                        replies={comment.replies}
-                        activeReplyBox={activeReplyBox}
-                        setActiveReplyBox={setActiveReplyBox}
-                        replyText={replyText}
-                        setReplyText={setReplyText}
-                        handlePostReply={handlePostReply}
-                        setComments={setComments}
-                        parentId={comment._id}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div key={comment.id} className="comment">
-                    <img
-                      src={comment.snippet.topLevelComment.snippet.authorProfileImageUrl}
-                      alt={comment.snippet.topLevelComment.snippet.authorDisplayName}
-                      style={{ width: 36, height: 36, borderRadius: "50%" }}
-                    />
-                    <div className="comment-body">
-                      <div className="comment-header">
-                        <span className="comment-author">
-                          {comment.snippet.topLevelComment.snippet.authorDisplayName}
-                        </span>
-                        <span className="comment-time">
-                          {formatRelativeDate(
-                            comment.snippet.topLevelComment.snippet.publishedAt
-                          )}
-                        </span>
-                      </div>
-                      <p className="comment-text">
-                        {comment.snippet.topLevelComment.snippet.textDisplay}
-                      </p>
-                      <div className="comment-actions">
-                        <span className="comment-likes">
-                          {formatCount(
-                            comment.snippet.topLevelComment.snippet.likeCount
-                          )}{" "}
-                          likes
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )
-              )}
-            </div>
-          </>
-        )}
+        <CommentsList
+          comments={comments}
+          user={user}
+          activeReplyBox={activeReplyBox}
+          replyText={replyText}
+          editingCommentId={editingCommentId}
+          editedCommentText={editedCommentText}
+          onReplyToggle={handleReplyToggle}
+          onReplyTextChange={setReplyText}
+          onPostReply={handlePostReply}
+          onCloseReplyBox={handleCloseReplyBox}
+          onEditComment={handleEditComment}
+          onCancelEdit={handleCancelEdit}
+          onSaveEdit={handleSaveEdit}
+          onEditTextChange={setEditedCommentText}
+          onDeleteComment={handleDeleteComment}
+          setActiveReplyBox={setActiveReplyBox}
+          setReplyText={setReplyText}
+          setComments={setComments}
+        />
       </div>
 
       <aside className="video-sidebar">
-        <RelatedVideos query={Relatedquery}/>
+        <RelatedVideos query={Relatedquery} />
       </aside>
     </div>
   );
