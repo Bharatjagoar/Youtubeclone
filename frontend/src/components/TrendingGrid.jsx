@@ -4,32 +4,7 @@ import axios from "axios";
 import VideoCard from "./VideoCard";
 import PromptsModal from "./promptsModal";
 import "./TrendingGrid.css";
-
-const formatCount = (num) => {
-  if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + "B";
-  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
-  if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
-  return num.toString();
-};
-
-const formatRelativeDate = (dateString) => {
-  const publishedDate = new Date(dateString);
-  const now = new Date();
-  const diffMs = now - publishedDate;
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHr = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHr / 24);
-  const diffMonth = Math.floor(diffDay / 30);
-  const diffYear = Math.floor(diffDay / 365);
-
-  if (diffYear > 0) return `${diffYear} year${diffYear > 1 ? "s" : ""} ago`;
-  if (diffMonth > 0) return `${diffMonth} month${diffMonth > 1 ? "s" : ""} ago`;
-  if (diffDay > 0) return `${diffDay} day${diffDay > 1 ? "s" : ""} ago`;
-  if (diffHr > 0) return `${diffHr} hour${diffHr > 1 ? "s" : ""} ago`;
-  if (diffMin > 0) return `${diffMin} minute${diffMin > 1 ? "s" : ""} ago`;
-  return "Just now";
-};
+import { formatRelativeDate, formatCount } from "./helperfunctions";
 
 const parseISO8601Duration = (duration) => {
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
@@ -45,6 +20,9 @@ const TrendingGrid = () => {
   const [showPrompt, setShowPrompt] = useState(false);
   const [nextPageToken, setNextPageToken] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [errorOpen, setErrorOpen] = useState(false);
+
 
   const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
   const observerTarget = useRef(null);
@@ -118,9 +96,20 @@ const TrendingGrid = () => {
         setNextPageToken(res.data.nextPageToken || null);
       } catch (error) {
         console.error("Error fetching trending videos:", error.response?.data || error.message);
+
+        // Determine a friendly message
+        const status = error.response?.status;
+        if (status === 403) {
+          setErrorMsg("API quota exceeded. Please try again later.");
+        } else {
+          setErrorMsg("Failed to load trending videos. Check your connection or API key.");
+        }
+
+        setErrorOpen(true);
       } finally {
         setLoading(false);
       }
+
     },
     [loading]
   );
@@ -153,19 +142,32 @@ const TrendingGrid = () => {
 
   return (
     <div className="trending-grid">
-      {showPrompt && <PromptsModal onClose={() => setShowPrompt(false)} />}
+      {errorOpen && (
+        <div className="error-banner">
+          <span>{errorMsg}</span>
+          <button
+            onClick={() => {
+              setErrorOpen(false);
+              fetchVideos(nextPageToken || null);
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       <main className="video-grid">
         {videos.map((video) => (
           <VideoCard key={video.id} video={video} detect={detect} />
         ))}
       </main>
 
-      {/* Loader + Intersection target */}
       <div ref={observerTarget} style={{ height: "50px", margin: "20px", textAlign: "center" }}>
         {loading && <p>Loading more videos...</p>}
       </div>
     </div>
   );
+
 };
 
 export default TrendingGrid;

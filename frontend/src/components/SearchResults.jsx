@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { verifyTokenBeforeFetch } from "../utils/verifyTokenBeforeFetch";
 import "./SearchResults.css";
+import PromptsModal from "./promptsModal.jsx";
 
 const formatCount = (num) => {
   if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + "B";
@@ -46,6 +47,8 @@ const SearchResults = () => {
   const { results, query } = useSelector((state) => state.search); // assuming query is stored
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [pageToken, setPageToken] = useState(null);
@@ -58,8 +61,18 @@ const SearchResults = () => {
   // Append results on new search
   useEffect(() => {
     setAllResults(results || []);
-    setPageToken(null); // reset pagination
+    setPageToken(null);
+    setError(false);
+    setErrorMessage("");
   }, [results]);
+
+  useEffect(() => {
+    if (showModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [showModal]);
 
   const fetchMoreResults = useCallback(
     async (token) => {
@@ -94,11 +107,21 @@ const SearchResults = () => {
 
         setAllResults((prev) => [...prev, ...newItems]);
         setPageToken(res.data.nextPageToken || null);
-      } catch (error) {
-        console.error("Error fetching more search results:", error.response?.data || error.message);
+      } catch (err) {
+        console.error("Error fetching more search results:", err);
+
+        // pick the best message from the API or fallback
+        const msg =
+          err.response?.data?.error?.message ||
+          err.response?.data?.error?.errors?.[0]?.message ||
+          "Failed to load more results. Please try again.";
+
+        setErrorMessage(msg);
+        setError(true);
       } finally {
         setLoading(false);
       }
+
     },
     [API_KEY, query, loading]
   );
@@ -132,56 +155,58 @@ const SearchResults = () => {
   }
 
   return (
-    <div className="search-results">
-      {showModal && (
-        <div className="auth-modal">
-          <div className="auth-modal-content">
-            <p>You are not signed in.</p>
-            <button onClick={() => setShowModal(false)}>Close</button>
+    <>
+      {showModal && (<PromptsModal onClose={() => setShowModal(false)} />)}
+      <div className="search-results">
+        {error && (
+          <div className="error-banner">
+            <span>{errorMessage}</span>
+            <button onClick={() => fetchMoreResults(pageToken)}>Retry</button>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="results-grid">
-        {allResults.map((item) => (
-          <div
-            key={item.id}
-            className="search-result-card"
-            onClick={() => item.type === "video" && handleClick(item)}
-            style={{ cursor: item.type === "video" ? "pointer" : "default" }}
-          >
-            <img
-              src={item.type === "video" ? item.thumbnail : item.avatar}
-              alt={item.title}
-              className="result-thumbnail"
-            />
-            <div className="result-info">
-              <h3 className="result-title">{item.title}</h3>
-              {item.type === "video" && (
-                <>
-                  <p className="result-channel">
-                    {item.channelAvatar && (
-                      <img
-                        src={item.channelAvatar}
-                        alt={item.channelName}
-                        className="channel-avatar"
-                      />
-                    )}
-                    {item.channelName}
-                  </p>
-                  <p className="result-meta">{item.publishedAt}</p>
-                  <p className="result-description">{item.description}</p>
-                </>
-              )}
+        <div className="results-grid">
+          {allResults.map((item) => (
+            <div
+              key={item.id}
+              className="search-result-card"
+              onClick={() => item.type === "video" && handleClick(item)}
+              style={{ cursor: item.type === "video" ? "pointer" : "default" }}
+            >
+              <img
+                src={item.type === "video" ? item.thumbnail : item.avatar}
+                alt={item.title}
+                className="result-thumbnail"
+              />
+              <div className="result-info">
+                <h3 className="result-title">{item.title}</h3>
+                {item.type === "video" && (
+                  <>
+                    <p className="result-channel">
+                      {item.channelAvatar && (
+                        <img
+                          src={item.channelAvatar}
+                          alt={item.channelName}
+                          className="channel-avatar"
+                        />
+                      )}
+                      {item.channelName}
+                    </p>
+                    <p className="result-meta">{item.publishedAt}</p>
+                    <p className="result-description">{item.description}</p>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      <div ref={observerTarget} style={{ height: "50px", margin: "20px", textAlign: "center" }}>
-        {loading && <p>Loading more results...</p>}
+        <div ref={observerTarget} style={{ height: "50px", margin: "20px", textAlign: "center" }}>
+          {loading && <p>Loading more results...</p>}
+        </div>
       </div>
-    </div>
+    </>
+
   );
 };
 
