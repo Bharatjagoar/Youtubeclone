@@ -26,35 +26,39 @@ const tabs = [
 
 const Sidebar = () => {
   const [open, setOpen] = useState(true);
-  // const nav = useNavigate();
+  const nav = useNavigate();
 
   return (
-    <aside className={`sidebar ${open ? "open" : "closed"}`}>
+    <>
+      {/* Always-visible toggle button */}
       <button
-        className="sidebar-toggle"
+        className="sidebar-toggle-global"
         onClick={() => setOpen(!open)}
         aria-label="Toggle sidebar"
       >
         {open ? <FiX size={20} /> : <FiMenu size={20} />}
       </button>
-      <ul className="tab-list">
-        {tabs.map((tab, index) => (
-          <li
-            key={index}
-            className="tab-item"
-            onClick={() => {
-              if (tab.name === "Home") {
-                nav("/");
-              }
-            }}
-          >
-            <span className="tab-icon">{tab.icon}</span>
-            {open && <span className="tab-label">{tab.name}</span>}
-          </li>
-        ))}
-      </ul>
-    </aside>
+
+      {/* Sidebar itself */}
+      <aside className={`sidebar ${open ? "open" : "closed"}`}>
+        <ul className="tab-list">
+          {tabs.map((tab, index) => (
+            <li
+              key={index}
+              className="tab-item"
+              onClick={() => {
+                if (tab.name === "Home") nav("/");
+              }}
+            >
+              <span className="tab-icon">{tab.icon}</span>
+              {open && <span className="tab-label">{tab.name}</span>}
+            </li>
+          ))}
+        </ul>
+      </aside>
+    </>
   );
 };
+
 
 export default Sidebar;

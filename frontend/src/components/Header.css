@@ -9,12 +9,14 @@
   border-bottom: 1px solid #ddd;
   position: relative;
   z-index: 100;
+  /* background-color: red  ; */
 }
 
 .logo-combo {
   display: flex;
   align-items: center;
   cursor: pointer;
+  margin-left: 30px;
 }
 
 .logo-text {
@@ -133,7 +135,7 @@
   background: white;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease;
 }
 
@@ -185,4 +187,14 @@
   cursor: pointer;
   user-select: none;
   text-transform: uppercase;
+  /* padding: 2px; */
+
+}
+
+@media (max-width: 768px) {
+  .user-avatar-initials {
+    position: fixed;
+    right: 20px;
+    top: 10px;
+  }
 }
