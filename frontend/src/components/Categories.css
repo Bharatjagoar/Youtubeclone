@@ -6,9 +6,7 @@
   background: #fff;
   overflow-x: scroll;
   white-space: nowrap;
-  /* background-color: rebeccapurple; */
   height: 60px;
-  /* flex-grow: 3; */
 }
 
 .category-btn {
@@ -19,7 +17,6 @@
   cursor: pointer;
   font-size: 14px;
   flex-shrink: 0;
-  /* ensures button doesn’t shrink */
 }
 
 .category-btn:hover {
