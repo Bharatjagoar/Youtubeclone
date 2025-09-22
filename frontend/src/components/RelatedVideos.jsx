@@ -16,7 +16,8 @@ const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 function RelatedVideos({ query }) {
   const { videoId } = useParams();
   const navigate = useNavigate();
-    console.log("related component rendered !! ");
+  console.log("related component rendered !! ");
+
   // Cleaned search term
   const searchQuery = cleanText(query);
 
@@ -25,14 +26,16 @@ function RelatedVideos({ query }) {
   const [nextPageToken, setNextPageToken] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [initialized, setInitialized] = useState(false);
 
   // Sentinel ref for infinite scroll
   const sentinelRef = useRef(null);
 
   // Fetch one page of related videos
-  const loadRelatedVideos = useCallback(async () => {
+  const loadRelatedVideos = useCallback(async (pageToken = null, isInitial = false) => {
     if (loading) return;
     setLoading(true);
+    
     try {
       // 1. Search endpoint
       const searchParams = {
@@ -42,8 +45,9 @@ function RelatedVideos({ query }) {
         maxResults: 10,
         key: API_KEY,
       };
-      if (nextPageToken) {
-        searchParams.pageToken = nextPageToken;
+      
+      if (pageToken) {
+        searchParams.pageToken = pageToken;
       }
 
       const searchRes = await axios.get(
@@ -51,16 +55,16 @@ function RelatedVideos({ query }) {
         { params: searchParams }
       );
 
-      const { items: searchItems, nextPageToken: newToken } =
-        searchRes.data;
+      const { items: searchItems, nextPageToken: newToken } = searchRes.data;
 
-      // Extract video IDs
+      // Extract video IDs and filter out the current video
       const ids = searchItems
         .map((item) => item.id.videoId)
-        .filter(Boolean);
+        .filter((id) => id && id !== videoId); // Exclude current video
 
       if (ids.length === 0) {
         setNextPageToken(null);
+        setLoading(false);
         return;
       }
 
@@ -84,35 +88,60 @@ function RelatedVideos({ query }) {
         views: v.statistics.viewCount,
       }));
 
-      // Append new videos & update nextPageToken
-      setRelatedVideos((prev) => [...prev, ...newVideos]);
+      // Append or replace videos based on whether it's initial load
+      if (isInitial) {
+        setRelatedVideos(newVideos);
+      } else {
+        setRelatedVideos((prev) => [...prev, ...newVideos]);
+      }
+      
       setNextPageToken(newToken || null);
+      setError(null);
+      
     } catch (err) {
       console.error("Error fetching related videos:", err);
       setError("Failed to load related videos.");
+      setNextPageToken(null);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, nextPageToken, loading]);
+  }, [searchQuery, videoId, loading]);
+
+  // Load more videos for infinite scroll
+  const loadMoreVideos = useCallback(() => {
+    if (nextPageToken && !loading) {
+      loadRelatedVideos(nextPageToken, false);
+    }
+  }, [loadRelatedVideos, nextPageToken, loading]);
 
   // Reset and load first page when query or videoId changes
   useEffect(() => {
+    // Reset all state
     setRelatedVideos([]);
     setNextPageToken(null);
     setError(null);
-    loadRelatedVideos();
-  }, [searchQuery, videoId]);
+    setInitialized(false);
+    setLoading(false);
+    
+    // Add a small delay to ensure state is reset
+    const timeoutId = setTimeout(() => {
+      if (searchQuery) {
+        loadRelatedVideos(null, true);
+        setInitialized(true);
+      }
+    }, 100);
 
-  // IntersectionObserver to trigger loadRelatedVideos()
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, videoId]); // Removed loadRelatedVideos from dependencies
+
+  // IntersectionObserver to trigger loadMoreVideos()
   useEffect(() => {
-    if (!sentinelRef.current) return;
+    if (!sentinelRef.current || !initialized) return;
+    
     const observer = new IntersectionObserver(
       (entries) => {
-        if (
-          entries[0].isIntersecting &&
-          nextPageToken
-        ) {
-          loadRelatedVideos();
+        if (entries[0].isIntersecting && nextPageToken && !loading) {
+          loadMoreVideos();
         }
       },
       { rootMargin: "200px" }
@@ -120,15 +149,42 @@ function RelatedVideos({ query }) {
 
     observer.observe(sentinelRef.current);
     return () => observer.disconnect();
-  }, [loadRelatedVideos, nextPageToken]);
+  }, [loadMoreVideos, nextPageToken, initialized, loading]);
 
   // Render states
-  if (error)
-    return <p className="text-red-500">{error}</p>;
+  if (error) {
+    return (
+      <div className="related-videos">
+        <h4 className="font-semibold mb-2">Up Next</h4>
+        <p className="text-red-500">{error}</p>
+        <button 
+          onClick={() => {
+            setError(null);
+            loadRelatedVideos(null, true);
+          }}
+          className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="related-videos">
       <h4 className="font-semibold mb-2">Up Next</h4>
+
+      {relatedVideos.length === 0 && loading && (
+        <div className="text-center py-4">
+          <p className="text-gray-500">Loading videos...</p>
+        </div>
+      )}
+
+      {relatedVideos.length === 0 && !loading && initialized && (
+        <div className="text-center py-4">
+          <p className="text-gray-500">No related videos found</p>
+        </div>
+      )}
 
       {relatedVideos.map((v) => (
         <div
@@ -140,6 +196,7 @@ function RelatedVideos({ query }) {
             src={v.thumbnail}
             alt={v.title}
             className="w-40 h-24 object-cover rounded-lg"
+            loading="lazy"
           />
           <div className="ml-3 flex flex-col justify-between">
             <p className="sidebar-title font-medium line-clamp-2">
@@ -156,21 +213,19 @@ function RelatedVideos({ query }) {
       ))}
 
       {/* Sentinel triggers more loading */}
-      <div
-        ref={sentinelRef}
-        className="sentinel text-center py-4"
-      >
-        {loading && (
-          <p className="text-gray-500">
-            Loading more videos…
-          </p>
-        )}
-        {!nextPageToken && !loading && (
-          <p className="text-gray-500">
-            No more videos
-          </p>
-        )}
-      </div>
+      {relatedVideos.length > 0 && (
+        <div
+          ref={sentinelRef}
+          className="sentinel text-center py-4"
+        >
+          {loading && (
+            <p className="text-gray-500">Loading more videos…</p>
+          )}
+          {!nextPageToken && !loading && (
+            <p className="text-gray-500">No more videos</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

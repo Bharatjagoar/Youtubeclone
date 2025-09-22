@@ -1,5 +1,5 @@
 // src/components/TrendingGrid.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import VideoCard from "./VideoCard";
 import PromptsModal from "./promptsModal";
@@ -43,18 +43,27 @@ const parseISO8601Duration = (duration) => {
 const TrendingGrid = () => {
   const [videos, setVideos] = useState([]);
   const [showPrompt, setShowPrompt] = useState(false);
-  const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+  const [nextPageToken, setNextPageToken] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchVideos = async () => {
+  const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+  const observerTarget = useRef(null);
+
+  // Fetch videos function
+  const fetchVideos = useCallback(
+    async (pageToken = null) => {
+      if (loading) return;
+      setLoading(true);
+
       try {
         const res = await axios.get("https://www.googleapis.com/youtube/v3/search", {
           params: {
             part: "snippet",
             q: "trending",
             type: "video",
-            maxResults: 50,
+            maxResults: 20, // smaller batch for infinite scroll
             key: API_KEY,
+            pageToken,
           },
         });
 
@@ -105,14 +114,38 @@ const TrendingGrid = () => {
           };
         });
 
-        setVideos(formattedVideos);
+        setVideos((prev) => [...prev, ...formattedVideos]);
+        setNextPageToken(res.data.nextPageToken || null);
       } catch (error) {
         console.error("Error fetching trending videos:", error.response?.data || error.message);
+      } finally {
+        setLoading(false);
       }
-    };
+    },
+    [loading]
+  );
 
+  // Initial fetch
+  useEffect(() => {
     fetchVideos();
-  }, [API_KEY]);
+  }, []);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!observerTarget.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && nextPageToken) {
+          fetchVideos(nextPageToken);
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(observerTarget.current);
+    return () => observer.disconnect();
+  }, [nextPageToken, fetchVideos]);
 
   const detect = (isValid) => {
     if (!isValid) setShowPrompt(true);
@@ -126,6 +159,11 @@ const TrendingGrid = () => {
           <VideoCard key={video.id} video={video} detect={detect} />
         ))}
       </main>
+
+      {/* Loader + Intersection target */}
+      <div ref={observerTarget} style={{ height: "50px", margin: "20px", textAlign: "center" }}>
+        {loading && <p>Loading more videos...</p>}
+      </div>
     </div>
   );
 };

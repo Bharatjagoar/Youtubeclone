@@ -24,6 +24,10 @@ function ChannelPage() {
   const [nextPageToken, setNextPageToken] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // new local subscription state
+  const [subscribed, setSubscribed] = useState(false);
+  const [subscriberCount, setSubscriberCount] = useState(0);
+
   const sentinelRef = useRef(null);
 
   // 1. Fetch channel info + initial videos
@@ -44,6 +48,9 @@ function ChannelPage() {
         );
         const channel = channelRes.data.items[0];
         setChannelData(channel);
+
+        // initialize subscriber count from API
+        setSubscriberCount(Number(channel.statistics.subscriberCount));
 
         // Initial videos batch
         const uploadsPlaylistId =
@@ -121,6 +128,18 @@ function ChannelPage() {
     navigate(`/channel/${channelId}`);
   };
 
+  // ✅ handle subscribe toggle
+  const handleSubscribe = () => {
+    setSubscribed((prev) => !prev);
+
+    setSubscriberCount((prev) => {
+      if (prev < 1000) {
+        return subscribed ? prev - 1 : prev + 1; // toggle count
+      }
+      return prev; // >=1000 → no change
+    });
+  };
+
   return (
     <div className="channel-page">
       {brandingSettings?.image?.bannerExternalUrl && (
@@ -146,7 +165,7 @@ function ChannelPage() {
           <div className="channel-meta">
             <h2 className="channel-title">{snippet.title}</h2>
             <p className="channel-stats">
-              {formatCount(statistics.subscriberCount)} subscribers •{" "}
+              {formatCount(subscriberCount)} subscribers •{" "}
               {formatCount(statistics.videoCount)} videos
             </p>
             <p className="channel-description">
@@ -155,7 +174,12 @@ function ChannelPage() {
           </div>
         </div>
 
-        <button className="subscribe-btn">Subscribe</button>
+        <button
+          className={`subscribe-btn ${subscribed ? "subscribed" : ""}`}
+          onClick={handleSubscribe}
+        >
+          {subscribed ? "Subscribed" : "Subscribe"}
+        </button>
       </div>
 
       <div className="video-grid">

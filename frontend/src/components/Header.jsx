@@ -13,6 +13,7 @@ import { verifyTokenBeforeFetch } from "../utils/verifyTokenBeforeFetch";
 import LogoutModal from "./LogoutModal";
 import AuthModal from "./AuthModel";
 import "./Header.css";
+import { clearResults } from "../redux/searchSlice"; // adjust path as needed
 
 const Header = () => {
   const [input, setInput] = useState("");
@@ -118,6 +119,7 @@ const Header = () => {
     setInput("");
     setSuggestions([]);
     setResults([]);
+    dispatch(clearResults()); // This resets isResult to false
   };
 
   return (

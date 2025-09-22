@@ -3,34 +3,32 @@
 /* Container for the trending section */
 .trending-grid {
   width: 100%;
-  padding: 16px;
+  padding: 8px;           /* tighten outer padding */
   box-sizing: border-box;
 }
 
 /* The video grid layout */
 .video-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  gap: 8px;               /* smaller gap between cards */
+  /* fill the row with as many 200px-wide cards as will fit */
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
 }
 
-/* Optional: smooth fade-in for loaded videos */
+/* Fade-in for loaded videos */
 .video-grid > * {
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeIn 0.2s ease-in-out;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Make sure thumbnails span the full card width */
+.video-grid img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
 }
 
-/* Prompt modal overlay (if shown) */
+/* Prompt modal overlay (if still used) */
 .trending-grid .prompts-modal {
   position: fixed;
   top: 0;
@@ -44,17 +42,53 @@
   z-index: 1000;
 }
 
-/* Responsive tweaks */
-@media (max-width: 768px) {
-  .video-grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
+/* Keyframes for fade-in */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (max-width: 480px) {
+/* ── Responsive Tweaks ── */
+
+/* Desktop: Force 4 columns for anything up to 1550px */
+@media (max-width: 1550px) {
   .video-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
+    grid-template-columns: repeat(4, minmax(350px, 1fr)); /* 4 columns */
+  }
+}
+
+/* Large tablets / small desktops */
+@media (max-width: 1024px) {
+  .video-grid {
+    gap: 6px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+}
+
+/* Mobile landscape */
+@media (max-width: 768px) {
+  .trending-grid {
+    padding: 6px;
+  }
+  .video-grid {
+    gap: 4px;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+}
+
+/* Mobile portrait / extra small */
+@media (max-width: 480px) {
+  .trending-grid {
+    padding: 4px;
+  }
+  .video-grid {
+    gap: 4px;
+    grid-template-columns: 1fr;  /* single column */
   }
 }
