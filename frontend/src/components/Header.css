@@ -110,7 +110,9 @@
   }
 
   .search-container {
-    margin: 12px 0;
+    /* margin: 20px 0; */
+    margin: auto;
+    margin-top: 20px;
     width: 100%;
   }
 

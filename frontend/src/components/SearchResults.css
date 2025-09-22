@@ -93,6 +93,9 @@
   .search-result-card {
     flex-direction: column;
     align-items: center;
+    /* justify-content: center; */
+    margin: 40px auto;
+    margin-top: 0;
   }
 
   .result-thumbnail {
