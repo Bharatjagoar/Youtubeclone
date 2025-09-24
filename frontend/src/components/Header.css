@@ -110,7 +110,6 @@
   }
 
   .search-container {
-    /* margin: 20px 0; */
     margin: auto;
     margin-top: 20px;
     width: 100%;
@@ -123,7 +122,25 @@
   .suggestion-item {
     font-size: 14px;
   }
+
+  .user-avatar-initials {
+    position: fixed;
+    right: 20px;
+    top: 10px;
+  }
+
+  /* New: keep the sign-in button fixed in the corner */
+  .signin-btn {
+    position: fixed;
+    top: 10px;
+    right: 20px;
+    width: auto;
+    align-self: flex-end;
+    z-index: 200;
+    padding: 8px 16px;
+  }
 }
+
 
 .results-container {
   display: grid;
@@ -191,12 +208,4 @@
   text-transform: uppercase;
   /* padding: 2px; */
 
-}
-
-@media (max-width: 768px) {
-  .user-avatar-initials {
-    position: fixed;
-    right: 20px;
-    top: 10px;
-  }
 }
