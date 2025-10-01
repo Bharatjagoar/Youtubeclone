@@ -14,6 +14,7 @@ import LogoutModal from "./LogoutModal";
 import AuthModal from "./AuthModel";
 import "./Header.css";
 import { clearResults } from "../redux/searchSlice"; // adjust path as needed
+import UserMenu from "./UserMenu";
 
 const Header = () => {
   const [input, setInput] = useState("");
@@ -21,6 +22,7 @@ const Header = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -33,6 +35,8 @@ const Header = () => {
   // ✅ Get stored user data from localStorage
   const storedUser = JSON.parse(localStorage.getItem("user")) || {};
   const username = storedUser.username || "";
+  const avatarRef = useRef(null);
+
 
   // ✅ Generate initials from username
   const getInitials = (name) => {
@@ -121,7 +125,15 @@ const Header = () => {
     setResults([]);
     dispatch(clearResults()); // This resets isResult to false
   };
+  const handleChannelDetails = () => {
+    setShowMenu(false);
+    navigate("/Mychannel"); // ✅ navigate to channel details page
+  };
 
+  const handleLogoutClick = () => {
+    setShowMenu(false);
+    setShowLogoutModal(true); // ✅ open logout modal
+  };
   return (
     <>
       <header className="header">
@@ -173,12 +185,24 @@ const Header = () => {
             Sign In
           </button>
         ) : (
-          <div
-            className="user-avatar-initials"
-            style={{ backgroundColor: avatarColor }}
-            onClick={() => setShowLogoutModal(true)}
-          >
-            {getInitials(username)}
+          <div className="user-avatar-wrapper">
+            <div
+              className="user-avatar-initials"
+              style={{ backgroundColor: avatarColor }}
+              ref={avatarRef}
+              onClick={() => setShowMenu((prev) => !prev)}
+            >
+              {getInitials(username)}
+            </div>
+
+            {showMenu && (
+              <UserMenu
+                avatarRef={avatarRef}
+                onClose={() => setShowMenu(false)}
+                onChannelDetails={handleChannelDetails}
+                onLogout={handleLogoutClick}
+              />
+            )}
           </div>
         )}
 

@@ -30,6 +30,9 @@
   flex-shrink: 0;
   /* padding: 20px; */
   margin-right: 10px ;
+  background-color: yellow;
+  height: 50px;
+  width: 50px;
 }
 
 .avatar-circle {

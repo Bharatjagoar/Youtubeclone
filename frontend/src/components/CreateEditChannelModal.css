@@ -1,0 +1,228 @@
+/* Overlay backdrop */
+.cecc-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+/* Modal container */
+.cecc-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 400px;
+  max-width: 90%;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Modal title */
+.cecc-modal h2 {
+  margin-top: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111;
+}
+
+/* Avatar section */
+.cecc-avatar-section {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 16px;
+}
+
+/* Avatar preview */
+.cecc-avatar-preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f2f2f2;
+  overflow: hidden;
+  margin-right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.2s ease;
+}
+
+.cecc-avatar-preview:hover {
+  box-shadow: 0 0 0 2px #065fd4;
+}
+
+.cecc-avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cecc-avatar-placeholder {
+  font-size: 24px;
+  color: #666;
+  font-weight: bold;
+}
+
+/* Avatar upload label */
+.cecc-avatar-label {
+  color: #065fd4;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.cecc-avatar-label input {
+  display: none;
+}
+
+/* Input fields */
+.cecc-field {
+  display: block;
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+}
+
+.cecc-field label {
+  font-weight: 500;
+  margin-bottom: 4px;
+  display: block;
+  color: #333;
+}
+
+.cecc-field input {
+  width: 100%;
+  padding: 8px 12px;
+  margin-top: 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cecc-field input:focus {
+  border-color: #065fd4;
+  box-shadow: 0 0 0 2px rgba(6, 95, 212, 0.2);
+}
+
+/* Disclaimer text */
+.cecc-disclaimer {
+  font-size: 0.75rem;
+  color: #606060;
+  margin: 16px 0;
+  line-height: 1.4;
+}
+
+/* Button actions */
+.cecc-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cecc-btn-cancel {
+  background: none;
+  border: none;
+  color: #065fd4;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.cecc-btn-cancel:hover {
+  color: #013a9f;
+}
+
+.cecc-btn-primary {
+  background: #cc0000;
+  border: none;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.2s ease;
+}
+
+.cecc-btn-primary:hover {
+  background: #a80000;
+}
+
+.cecc-btn-cancel:disabled,
+.cecc-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Loading spinner (optional) */
+.cecc-btn-primary.loading::after {
+  content: "";
+  display: inline-block;
+  margin-left: 8px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: cecc-spin 0.6s linear infinite;
+}
+
+@keyframes cecc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive tweaks */
+@media (max-width: 480px) {
+  .cecc-modal {
+    padding: 16px;
+  }
+
+  .cecc-avatar-preview {
+    width: 48px;
+    height: 48px;
+  }
+
+  .cecc-btn-primary,
+  .cecc-btn-cancel {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+}
+.cecc-field textarea {
+  width: 100%;
+  padding: 8px 12px;
+  margin-top: 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+textarea{
+  font-family: sans-serif;
+}
+
+.cecc-field textarea:placeholder-shown{
+
+
+}
+.cecc-field textarea:focus {
+  border-color: #065fd4;
+  box-shadow: 0 0 0 2px rgba(6, 95, 212, 0.2);
+}

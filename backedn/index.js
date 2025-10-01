@@ -5,6 +5,7 @@ require("dotenv").config();
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const commentRoutes = require("./routes/commentRoutes");
+const channelRoutes = require("./routes/channelRoutes")
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 // Routes
 app.use("/auth", authRoutes);
 app.use("/comments", commentRoutes);
+app.use("/channels",channelRoutes);
 
 // Connect DB and start server
 connectDB();

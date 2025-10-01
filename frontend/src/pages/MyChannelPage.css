@@ -1,0 +1,121 @@
+/* src/pages/MyChannelPage.css */
+
+.my-channel-page {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+.channel-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.channel-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  /* border: 4px solid #cc0000; */
+  border-radius:50%;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.channel-name {
+  font-size: 2rem;
+  margin: 0 0 8px;
+}
+
+.channel-description {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 16px;
+}
+
+.channel-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+
+.channel-actions button {
+  background: #cc0000;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.channel-actions button:hover {
+  opacity: 0.9;
+}
+
+.channel-videos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.channel-video-card {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.video-player-thumb {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.video-info {
+  padding: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.video-title {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.video-info button {
+  background: none;
+  border: none;
+  color: #cc0000;
+  cursor: pointer;
+}
+
+.no-channel {
+  text-align: center;
+  margin-top: 80px;
+}
+
+.no-channel p {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+.no-channel button {
+  background: #cc0000;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.no-channel button:hover {
+  opacity: 0.9;
+}
