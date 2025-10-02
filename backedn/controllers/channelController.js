@@ -1,101 +1,171 @@
-// const Channel = require("../models/channel");
+// controllers/channelController.js
 const Channel = require("../models/channel");
-
-
 const User = require("../models/User");
+const mongoose = require("mongoose");
 
 module.exports.createChannel = async (req, res) => {
   const { name, description, avatarUrl, user, username } = req.body;
+  // Accept user from body or from auth middleware
+  const userId = user || (req.user && req.user._id);
 
-  if (!user) {
+  if (!userId) {
     return res.status(400).json({ message: "User ID is required" });
   }
 
   try {
-    // Prevent duplicate channel per user
-    const exists = await Channel.findOne({ user });
+    const exists = await Channel.findOne({ user: userId });
     if (exists) {
       return res.status(400).json({ message: "User already has a channel" });
     }
 
-    // Prevent duplicate username (handle)
-    const usernameExists = await Channel.findOne({ username });
+    const usernameExists = username ? await Channel.findOne({ username }) : null;
     if (usernameExists) {
-      return res
-        .status(400)
-        .json({ message: "This channel username is already taken" });
+      return res.status(400).json({ message: "This channel username is already taken" });
     }
 
-    // Create channel
     const channelcreated = await Channel.create({
-      user,
+      user: userId,
       name,
       username,
       description,
       avatarUrl,
     });
 
-    // Update user with channel reference
-    const updatedUser = await User.findByIdAndUpdate(
-      user,
-      { channel: channelcreated._id },
-      { new: true }
-    ).populate("channel");
+    // Update user with channel reference (if you have a User model)
+    try {
+      await User.findByIdAndUpdate(userId, { channel: channelcreated._id }, { new: true });
+    } catch (e) {
+      // not fatal — just log if User doesn't exist or update fails
+      console.warn("Failed to update user with channel reference:", e.message);
+    }
 
     return res.status(201).json({
       message: "Channel created successfully",
       channel: channelcreated,
-      user: updatedUser, // 👈 return updated user as well
     });
   } catch (error) {
     console.error("Error creating channel:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-
-
-// 2) Get Channel by ID
 module.exports.getChannelById = async (req, res) => {
-  const channel = await Channel.findById(req.params.channelId);
-  if (!channel) {
-    return res.status(404).json({ message: "Channel not found" });
+  try {
+    const channel = await Channel.findOne({ user: req.params.userId });
+    if (!channel) return res.status(404).json({ message: "Channel not found" });
+    res.json(channel);
+  } catch (err) {
+    console.error("getChannelById error:", err);
+    res.status(500).json({ message: "Server error" });
   }
-  res.json(channel);
 };
 
-// 3) Update Channel (name & description)
 module.exports.updateChannel = async (req, res) => {
   const { name, description } = req.body;
-  const channel = await Channel.findById(req.params.channelId);
+  try {
+    const channel = await Channel.findById(req.params.channelId);
+    if (!channel) return res.status(404).json({ message: "Channel not found" });
 
-  if (!channel) {
-    return res.status(404).json({ message: "Channel not found" });
+    // only owner may update
+    if (!req.user || !channel.user.equals(req.user._id)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    channel.name = name ?? channel.name;
+    channel.description = description ?? channel.description;
+    await channel.save();
+
+    res.json(channel);
+  } catch (err) {
+    console.error("updateChannel error:", err);
+    res.status(500).json({ message: "Server error" });
   }
-  if (!channel.user.equals(req.user._id)) {
-    return res.status(403).json({ message: "Forbidden" });
-  }
-
-  channel.name = name ?? channel.name;
-  channel.description = description ?? channel.description;
-  await channel.save();
-
-  res.json(channel);
 };
 
-// 4) Delete Channel
 module.exports.deleteChannel = async (req, res) => {
-  const channel = await Channel.findById(req.params.channelId);
+  try {
+    const channel = await Channel.findById(req.params.channelId);
+    if (!channel) return res.status(404).json({ message: "Channel not found" });
 
-  if (!channel) {
-    return res.status(404).json({ message: "Channel not found" });
-  }
-  if (!channel.user.equals(req.user._id)) {
-    return res.status(403).json({ message: "Forbidden" });
-  }
+    if (!req.user || !channel.user.equals(req.user._id)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
-  await channel.remove();
-  res.json({ message: "Channel deleted successfully" });
+    await channel.remove();
+    res.json({ message: "Channel deleted successfully" });
+  } catch (err) {
+    console.error("deleteChannel error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Upload a video (stores { title, description, url } into channel.videos)
+module.exports.uploadVideo = async (req, res) => {
+  try {
+    const { title, description = "", url ,user} = req.body;
+    const { channelId } = req.params;
+    console.log(req.body, req.params)
+    if (!title || !url) {
+      return res.status(400).json({ message: "Title and video URL are required" });
+    }
+
+    const channel = await Channel.findById(channelId);
+    console.log(channel);
+    if (!channel) return res.status(404).json({ message: "Channel not found" });
+    const objectId = String(channel.user);
+    console.log(objectId,user);
+    // ownership check: requireAuth middleware should set req.user
+    if (!(objectId == user)) {
+      console.log("Forbidden",user,objectId)
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    // push and save
+    channel.videos.push({ title, description, url });
+    await channel.save();
+
+    // the saved subdocument (with _id) will be the last element
+    const savedVideo = channel.videos[channel.videos.length - 1];
+
+    return res.status(201).json({
+      message: "Video uploaded successfully",
+      video: savedVideo,
+      channel,
+    });
+  } catch (err) {
+    console.error("uploadVideo error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Fetch a single video by its DB subdocument _id
+module.exports.getVideoById = async (req, res) => {
+  try {
+    const { videoId } = req.params;
+
+    // find the channel containing that video (projection brings matched subdoc)
+    const channel = await Channel.findOne(
+      { "videos._id": videoId },
+      { "videos.$": 1, name: 1, username: 1, avatarUrl: 1, user: 1 }
+    );
+
+    if (!channel || !channel.videos || channel.videos.length === 0) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+
+    const video = channel.videos[0];
+    return res.json({
+      video,
+      channel: {
+        _id: channel._id,
+        name: channel.name,
+        username: channel.username,
+        avatarUrl: channel.avatarUrl,
+        user: channel.user,
+      },
+    });
+  } catch (err) {
+    console.error("getVideoById error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
 };

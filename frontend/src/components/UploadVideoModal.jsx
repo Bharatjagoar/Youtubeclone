@@ -1,57 +1,60 @@
 // src/components/UploadVideoModal.jsx
 import React, { useState } from "react";
+import axios from "axios";
 import "./UploadVideoModal.css";
 
 const UploadVideoModal = ({ channelId, onClose, onSuccess }) => {
-  const [file, setFile] = useState(null);
+  const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [uploading, setUploading] = useState(false);
-
-  const handleFile = (e) => {
-    setFile(e.target.files[0]);
-  };
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file) return alert("Please select a video file.");
-    setUploading(true);
-    try {
-      const form = new FormData();
-      form.append("video", file);
-      form.append("title", title);
-      form.append("description", description);
+    setError("");
 
-      const res = await fetch(`/api/channels/${channelId}/videos`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: form,
-      });
-      if (!res.ok) throw new Error("Upload failed");
-      const updated = await res.json();
-      onSuccess(updated);
+    if (!title.trim() || !url.trim()) {
+      setError("Title and video link are required.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token"); // use your auth token if available
+      let user = JSON.parse(localStorage.getItem("user"));
+      console.log(user._id);
+      user=user._id;
+      const res = await axios.post(
+        `http://localhost:5000/channels/${channelId}/videos`,
+        { title: title.trim(), description: description.trim(), url: url.trim(),user},
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+
+      onSuccess(res.data.video);
       onClose();
     } catch (err) {
-      console.error(err);
-      alert(err.message || "Upload failed");
+      console.error("Upload error:", err);
+      setError(err.response?.data?.message || "Failed to save video.");
     } finally {
-      setUploading(false);
+      setSaving(false);
     }
   };
 
   return (
     <div className="uvm-overlay">
       <form className="uvm-modal" onSubmit={handleSubmit}>
-        <h2>Upload Video</h2>
+        <h2>Add Video (YouTube link or video URL)</h2>
 
         <label className="uvm-field">
-          Video File
+          Video Link (YouTube link or direct URL)
           <input
-            type="file"
-            accept="video/*"
-            onChange={handleFile}
+            type="text"
+            placeholder="https://www.youtube.com/watch?v=..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
             required
           />
         </label>
@@ -60,6 +63,7 @@ const UploadVideoModal = ({ channelId, onClose, onSuccess }) => {
           Title
           <input
             type="text"
+            placeholder="Enter video title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
@@ -69,27 +73,21 @@ const UploadVideoModal = ({ channelId, onClose, onSuccess }) => {
         <label className="uvm-field">
           Description
           <textarea
+            placeholder="Short description (optional)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
           />
         </label>
 
+        {error && <p style={{ color: "red" }}>{error}</p>}
+
         <div className="uvm-actions">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={uploading}
-            className="uvm-btn-cancel"
-          >
+          <button type="button" onClick={onClose} disabled={saving} className="uvm-btn-cancel">
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={uploading}
-            className="uvm-btn-primary"
-          >
-            {uploading ? "Uploading…" : "Upload"}
+          <button type="submit" disabled={saving} className="uvm-btn-primary">
+            {saving ? "Saving…" : "Save"}
           </button>
         </div>
       </form>

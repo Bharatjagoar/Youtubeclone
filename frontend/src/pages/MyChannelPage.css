@@ -1,121 +1,152 @@
-/* src/pages/MyChannelPage.css */
-
 .my-channel-page {
-  max-width: 900px;
-  margin: 40px auto;
-  padding: 0 16px;
+  background-color: #f9f9f9;
+  padding-bottom: 2rem;
 }
 
-.channel-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.channel-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  /* border: 4px solid #cc0000; */
-  border-radius:50%;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-
-.channel-name {
-  font-size: 2rem;
-  margin: 0 0 8px;
-}
-
-.channel-description {
-  font-size: 1rem;
-  color: #555;
-  margin-bottom: 16px;
-}
-
-.channel-actions {
+.my-channel-header {
   display: flex;
-  justify-content: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
   flex-wrap: wrap;
-  margin-bottom: 32px;
 }
 
-.channel-actions button {
-  background: #cc0000;
-  color: #fff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
+.my-channel-header .avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
 }
 
-.channel-actions button:hover {
-  opacity: 0.9;
-}
-
-.channel-videos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
-}
-
-.channel-video-card {
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+.channel-meta {
   display: flex;
   flex-direction: column;
+  gap: 0.4rem;
 }
 
-.video-player-thumb {
-  width: 100%;
-  height: 140px;
-  object-fit: cover;
-}
-
-.video-info {
-  padding: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.video-title {
-  font-size: 1rem;
+.channel-title {
+  font-size: 1.5rem;
+  font-weight: 600;
   margin: 0;
 }
 
-.video-info button {
+.channel-username {
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.channel-description {
+  font-size: 0.95rem;
+  color: #444;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+/* Video grid (same style as YouTube page) */
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.video-card img {
+  width: 100%;
+  border-radius: 4px;
+}
+
+.video-card h4 {
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.no-videos {
+  text-align: center;
+  color: #777;
+  padding: 2rem;
+}
+
+/* ===== HAMBURGER ===== */
+.hamburger-wrapper {
+  position: relative;
+  margin-left: auto;
+  /* push to right */
+}
+
+.hamburger {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 24px;
+  height: 18px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.hamburger span {
+  display: block;
+  height: 3px;
+  width: 100%;
+  background: #333;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.hamburger.open span:nth-child(1) {
+  transform: rotate(45deg) translate(4px, 4px);
+}
+
+.hamburger.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.open span:nth-child(3) {
+  transform: rotate(-45deg) translate(4px, -4px);
+}
+
+/* ===== DROPDOWN MENU ===== */
+.menu-dropdown {
+  position: absolute;
+  top: 35px;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  animation: fadeInScale 0.2s ease forwards;
+  z-index: 10;
+}
+
+.menu-dropdown button {
+  display: block;
+  width: 160px;
+  padding: 10px 15px;
   background: none;
   border: none;
-  color: #cc0000;
+  text-align: left;
+  font-size: 0.95rem;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-.no-channel {
-  text-align: center;
-  margin-top: 80px;
+.menu-dropdown button:hover {
+  background: #f2f2f2;
 }
 
-.no-channel p {
-  font-size: 1.1rem;
-  color: #555;
-  margin-bottom: 20px;
-}
+/* ===== ANIMATION ===== */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-5px);
+  }
 
-.no-channel button {
-  background: #cc0000;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.no-channel button:hover {
-  opacity: 0.9;
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }

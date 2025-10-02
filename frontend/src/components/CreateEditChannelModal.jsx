@@ -85,7 +85,7 @@ const CreateEditChannelModal = ({ channel, onClose, onSuccess }) => {
 
       // Extract updated user + channel from backend
       const { channel: createdChannel, user: updatedUser } = backendRes.data;
-
+      console.log(backendRes.data);
       // ✅ Update localStorage with fresh user object from backend
       localStorage.setItem("user", JSON.stringify(updatedUser));
 
