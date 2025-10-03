@@ -1,0 +1,172 @@
+/* MyChannelVideoCard.css - namespaced to avoid collisions */
+.mychannel-video-card {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(20,20,30,0.06);
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+
+
+/* thumbnail wrapper */
+.mychannel-thumb-wrapper {
+  width: 100%;
+  height: 160px;
+  position: relative;
+  cursor: pointer;
+}
+
+.mychannel-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* play overlay small */
+.mychannel-play-overlay {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* row containing metadata and menu */
+.mychannel-video-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  gap: 8px;
+}
+
+.mychannel-video-meta {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.mychannel-video-title {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mychannel-video-date {
+  margin: 6px 0 0;
+  color: #666;
+  font-size: 0.82rem;
+}
+
+/* menu button */
+.mychannel-menu-area {
+  position: relative;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.mychannel-menu-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+}
+.mychannel-menu-btn:hover {
+  background: rgba(6,95,212,0.06);
+}
+
+/* dropdown */
+.mychannel-menu {
+  position: absolute;
+  right: 0;
+  top: 36px;
+  min-width: 120px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(10,10,20,0.08);
+  border: 1px solid rgba(0,0,0,0.04);
+  z-index: 1200;
+  padding: 6px;
+}
+
+.mychannel-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 8px;
+  text-align: left;
+  cursor: pointer;
+  font-weight: 500;
+  color: #222;
+  border-radius: 6px;
+}
+.mychannel-menu-item:hover {
+  background: rgba(0,0,0,0.03);
+}
+
+/* ======================
+   Context menu styling
+   ====================== */
+.mychannel-menu-area {
+  position: relative;
+  display: inline-block;
+}
+
+.mychannel-menu-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+}
+
+.mychannel-menu-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.mychannel-menu {
+  position: absolute;
+  top: 1px;
+  /* bottom: -50px; */
+  right: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 140px;
+  padding: 6px 0;
+}
+
+.mychannel-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: left;
+}
+
+.mychannel-menu-item:hover {
+  background: #f5f5f5;
+}

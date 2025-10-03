@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import CreateEditChannelModal from "../components/CreateEditChannelModal";
 import UploadVideoModal from "../components/UploadVideoModal";
-import "./MyChannelPage.css";
+import MyChannelVideoCard from "../components/MyChannelVideoCard";
+import "./MyChannelPage.css"; // keep your existing page styles
 
 function getYouTubeIdFromUrl(url) {
   try {
@@ -59,14 +60,47 @@ function MyChannelPage() {
     );
   }
 
+  // open video page
+  const openVideo = (videoId) => {
+    navigate(`/video/${videoId}`);
+  };
+
+  // Delete handler (frontend only): optimistic UI remove
+  const handleDeleteVideo = async (videoId) => {
+    // optimistic: remove locally
+    setChannelData((prev) => ({
+      ...prev,
+      videos: (prev.videos || []).filter((v) => v._id !== videoId),
+    }));
+
+    /* OPTIONAL: uncomment/adjust when backend delete route exists
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `http://localhost:5000/channels/${channelData._id}/videos/${videoId}`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+      // server responded OK — nothing else needed
+    } catch (err) {
+      console.error("Failed to delete video on server", err);
+      // TODO: rollback UI or re-fetch channel
+    }
+    */
+  };
+
   return (
     <div className="my-channel-page">
       <div className="my-channel-header">
-        <img
-          className="avatar"
-          src={channelData.avatarUrl || "/default-avatar.png"}
-          alt={channelData.name}
-        />
+        <div className="avatar">
+          {channelData.avatarUrl ? (
+            <img src={channelData.avatarUrl} alt={channelData.name} />
+          ) : (
+            <div className="avatar-fallback">
+              {channelData.name ? channelData.name.charAt(0).toUpperCase() : "?"}
+            </div>
+          )}
+        </div>
+
         <div className="channel-meta">
           <h2 className="channel-title">{channelData.name}</h2>
           <p className="channel-username">{channelData.username}</p>
@@ -96,22 +130,21 @@ function MyChannelPage() {
       </div>
 
       {channelData.videos?.length > 0 ? (
-        <div className="video-grid">
+        <div className="mychannel-video-grid">
           {channelData.videos.map((video) => {
             const ytId = getYouTubeIdFromUrl(video.url);
-            const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : "/default-thumb.jpg";
+            const thumb = ytId
+              ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
+              : "/default-thumb.jpg";
 
             return (
-              <div
+              <MyChannelVideoCard
                 key={video._id}
-                className="video-card"
-                onClick={() => navigate(`/video/${video._id}`)}
-                style={{ cursor: "pointer" }}
-              >
-                <img src={thumb} alt={video.title} />
-                <h4>{video.title}</h4>
-                <p>{new Date(video.createdAt).toLocaleDateString()}</p>
-              </div>
+                video={video}
+                thumb={thumb}
+                onOpen={openVideo}
+                onDelete={handleDeleteVideo}
+              />
             );
           })}
         </div>
