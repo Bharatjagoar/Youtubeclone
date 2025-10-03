@@ -5,11 +5,12 @@ import axios from "axios";
 import CreateEditChannelModal from "../components/CreateEditChannelModal";
 import UploadVideoModal from "../components/UploadVideoModal";
 import MyChannelVideoCard from "../components/MyChannelVideoCard";
-import "./MyChannelPage.css"; // keep your existing page styles
+import "./MyChannelPage.css";
 
 function getYouTubeIdFromUrl(url) {
   try {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const regExp =
+      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return match && match[2].length === 11 ? match[2] : null;
   } catch {
@@ -22,10 +23,23 @@ function MyChannelPage() {
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const navigate = useNavigate();
 
+  // ✅ safe JSON parse
+  const getStoredUser = () => {
+    try {
+      const raw = localStorage.getItem("user");
+      if (!raw || raw === "undefined") return null;
+      return JSON.parse(raw);
+    } catch (e) {
+      console.error("Failed to parse user from localStorage", e);
+      return null;
+    }
+  };
+
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
+    const user = getStoredUser();
     if (!user) {
       navigate("/");
       return;
@@ -33,7 +47,9 @@ function MyChannelPage() {
 
     async function fetchMyChannel() {
       try {
-        const res = await axios.get(`http://localhost:5000/channels/user/${user._id}`);
+        const res = await axios.get(
+          `http://localhost:5000/channels/user/${user._id}`
+        );
         setChannelData(res.data);
       } catch (err) {
         if (err.response?.status === 404) {
@@ -54,7 +70,7 @@ function MyChannelPage() {
   if (!channelData) {
     return (
       <CreateEditChannelModal
-        onClose={() => { }}
+        onClose={() => {}}
         onSuccess={(newChannel) => setChannelData(newChannel)}
       />
     );
@@ -65,17 +81,17 @@ function MyChannelPage() {
     navigate(`/video/${videoId}`);
   };
 
-  // Delete handler (frontend only): optimistic UI remove
+  // Delete handler
   const handleDeleteVideo = async (videoId) => {
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      console.log(user._id);
+      const user = getStoredUser();
+      if (!user) return navigate("/");
+
       const res = await axios.delete(
         `http://localhost:5000/channels/${channelData._id}/videos/${videoId}/user/${user._id}`,
         { withCredentials: true }
       );
 
-      // Update local state
       setChannelData({
         ...channelData,
         videos: channelData.videos.filter((v) => v._id !== videoId),
@@ -88,7 +104,6 @@ function MyChannelPage() {
     }
   };
 
-
   return (
     <div className="my-channel-page">
       <div className="my-channel-header">
@@ -97,7 +112,9 @@ function MyChannelPage() {
             <img src={channelData.avatarUrl} alt={channelData.name} />
           ) : (
             <div className="avatar-fallback">
-              {channelData.name ? channelData.name.charAt(0).toUpperCase() : "?"}
+              {channelData.name
+                ? channelData.name.charAt(0).toUpperCase()
+                : "?"}
             </div>
           )}
         </div>
@@ -122,10 +139,27 @@ function MyChannelPage() {
 
           {menuOpen && (
             <div className="menu-dropdown">
-              <button onClick={() => console.log("Edit channel")}>✏️ Edit Channel</button>
-              <button onClick={() => console.log("Delete channel")}>🗑️ Delete Channel</button>
-              <button onClick={() => setShowUploadModal(true)}>⬆️ Upload Video</button>
+              <button onClick={() => setShowEditModal(true)}>
+                ✏️ Edit Channel
+              </button>
+              <button onClick={() => console.log("Delete channel")}>
+                🗑️ Delete Channel
+              </button>
+              <button onClick={() => setShowUploadModal(true)}>
+                ⬆️ Upload Video
+              </button>
             </div>
+          )}
+
+          {showEditModal && (
+            <CreateEditChannelModal
+              channel={channelData}
+              onClose={() => setShowEditModal(false)}
+              onSuccess={(updatedChannel) => {
+                setChannelData(updatedChannel);
+                setShowEditModal(false);
+              }}
+            />
           )}
         </div>
       </div>
@@ -137,7 +171,6 @@ function MyChannelPage() {
             const thumb = ytId
               ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
               : "/default-thumb.jpg";
-            console.log(video);
             return (
               <MyChannelVideoCard
                 key={video._id}

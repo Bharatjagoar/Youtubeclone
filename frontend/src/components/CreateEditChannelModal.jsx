@@ -13,7 +13,8 @@ const CreateEditChannelModal = ({ channel, onClose, onSuccess }) => {
   const [avatarPreview, setAvatarPreview] = useState(channel?.avatarUrl || "");
   const [submitting, setSubmitting] = useState(false);
 
-  // Auto-generate handle (username) when user enters a name (only on create)
+
+  // Only auto-generate username if creating
   useEffect(() => {
     if (!localStorage.getItem("user")) {
       console.log("No token");
@@ -40,62 +41,61 @@ const CreateEditChannelModal = ({ channel, onClose, onSuccess }) => {
     setSubmitting(true);
 
     try {
-      let avatarUrl = "";
+      let avatarUrl = avatarPreview;
 
-      // Upload avatar to Cloudinary if selected
+      // Upload avatar to Cloudinary if new file selected
       if (avatarFile) {
         const formData = new FormData();
         formData.append("file", avatarFile);
-        formData.append(
-          "upload_preset",
-          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
-        );
+        formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
 
         const cloudinaryRes = await axios.post(
-          `https://api.cloudinary.com/v1_1/${
-            import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-          }/image/upload`,
+          `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
           formData
         );
 
         avatarUrl = cloudinaryRes.data.secure_url;
       }
 
-      // Prepare channel payload
+      const user = JSON.parse(localStorage.getItem("user"));
+
+      // Payload (skip username in edit mode)
       const payload = {
         name,
         description,
         avatarUrl,
-        username,
+        ...(channel ? {} : { username }), // only send username if creating
+        user: user._id,
       };
 
-      const user = JSON.parse(localStorage.getItem("user"));
-      payload.user = user._id;
+      let backendRes;
+      if (channel) {
+        // Update existing channel
+        console.log(channel);
+        backendRes = await axios.put(
+          `http://localhost:5000/channels/${channel._id}`,
+          payload,
+          { headers: { Authorization: `Bearer ${user._id}` } }
+        );
+      } else {
+        // Create new channel
+        backendRes = await axios.post("http://localhost:5000/channels", payload, {
+          headers: { Authorization: `Bearer ${user._id}` },
+        });
+      }
 
-      // Send channel data to backend
-      const backendRes = await axios.post(
-        "http://localhost:5000/channels",
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${user._id}`,
-          },
-        }
-      );
+      const { channel: savedChannel, user: updatedUser } = backendRes.data;
 
-      // Extract updated user + channel from backend
-      const { channel: createdChannel, user: updatedUser } = backendRes.data;
-      console.log(backendRes.data);
       // ✅ Update localStorage with fresh user object from backend
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      console.log(user,updatedUser)
+      localStorage.setItem("user", JSON.stringify(user));
 
-      // Fire onSuccess with new channel
-      onSuccess(createdChannel);
+      // Fire onSuccess
+      onSuccess(savedChannel);
 
-      // Close modal
       onClose();
     } catch (err) {
-      console.error("Channel creation failed:", err);
+      console.error("Channel save failed:", err);
       alert(err.response?.data?.message || "Something went wrong");
     } finally {
       setSubmitting(false);
@@ -135,17 +135,19 @@ const CreateEditChannelModal = ({ channel, onClose, onSuccess }) => {
           />
         </label>
 
-        {/* Generated Username (Handle) */}
-        <label className="cecc-field">
-          Channel Handle
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)} // allow manual edit
-            required
-          />
-          <small>This will be your channel handle (must be unique)</small>
-        </label>
+        {/* Username - only visible in create mode */}
+        {!channel && (
+          <label className="cecc-field">
+            Channel Handle
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+            <small>This will be your channel handle (must be unique)</small>
+          </label>
+        )}
 
         {/* Description */}
         <label className="cecc-field">
@@ -159,26 +161,14 @@ const CreateEditChannelModal = ({ channel, onClose, onSuccess }) => {
         </label>
 
         <p className="cecc-disclaimer">
-          By clicking {channel ? "Save" : "Create channel"} you agree to
-          YouTube’s Terms of Service. Changes to your name and picture are
-          visible only on YouTube.
+          By clicking {channel ? "Save" : "Create channel"} you agree to YouTube’s Terms of Service.
         </p>
 
-        {/* Buttons */}
         <div className="cecc-actions">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={submitting}
-            className="cecc-btn-cancel"
-          >
+          <button type="button" onClick={onClose} disabled={submitting} className="cecc-btn-cancel">
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={submitting}
-            className={`cecc-btn-primary ${submitting ? "loading" : ""}`}
-          >
+          <button type="submit" disabled={submitting} className={`cecc-btn-primary ${submitting ? "loading" : ""}`}>
             {submitting
               ? channel
                 ? "Saving…"

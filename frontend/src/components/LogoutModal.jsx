@@ -10,6 +10,7 @@ const LogoutModal = ({ onClose }) => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.clear();
     dispatch(setLoginStatus(false));
     onClose();
     nav("/");

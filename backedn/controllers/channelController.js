@@ -60,28 +60,6 @@ module.exports.getChannelById = async (req, res) => {
   }
 };
 
-module.exports.updateChannel = async (req, res) => {
-  const { name, description } = req.body;
-  try {
-    const channel = await Channel.findById(req.params.channelId);
-    if (!channel) return res.status(404).json({ message: "Channel not found" });
-
-    // only owner may update
-    if (!req.user || !channel.user.equals(req.user._id)) {
-      return res.status(403).json({ message: "Forbidden" });
-    }
-
-    channel.name = name ?? channel.name;
-    channel.description = description ?? channel.description;
-    await channel.save();
-
-    res.json(channel);
-  } catch (err) {
-    console.error("updateChannel error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
 module.exports.deleteChannel = async (req, res) => {
   try {
     const channel = await Channel.findById(req.params.channelId);
@@ -209,5 +187,36 @@ module.exports.deleteVideo = async (req, res) => {
   } catch (err) {
     console.error("deleteVideo error:", err);
     return res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+
+module.exports.updateChannel = async (req, res) => {
+  const { name, description, avatarUrl,user} = req.body;
+  console.log(req.body)
+  try {
+    const channel = await Channel.findById(req.params.channelId);
+    if (!channel) return res.status(404).json({ message: "Channel not found" });
+
+    const objectId = String(channel.user);
+    console.log(objectId, user);
+    // ownership check: requireAuth middleware should set req.user
+    if (!(objectId == user)) {
+      console.log("Forbidden", user, objectId)
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    channel.name = name ?? channel.name;
+    channel.description = description ?? channel.description;
+    channel.avatarUrl = avatarUrl ?? channel.avatarUrl;
+    await channel.save();
+
+    res.json({
+      message: "Channel updated successfully",
+      channel
+    });
+  } catch (err) {
+    console.error("updateChannel error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };

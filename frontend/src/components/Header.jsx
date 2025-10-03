@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { FaYoutube, FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchSearchResults, setQuery } from "../redux/searchSlice";
+import { fetchSearchResults, setQuery, clearResults } from "../redux/searchSlice";
 import axios from "axios";
 import {
   openAuthModal,
@@ -12,9 +12,8 @@ import {
 import { verifyTokenBeforeFetch } from "../utils/verifyTokenBeforeFetch";
 import LogoutModal from "./LogoutModal";
 import AuthModal from "./AuthModel";
-import "./Header.css";
-import { clearResults } from "../redux/searchSlice"; // adjust path as needed
 import UserMenu from "./UserMenu";
+import "./Header.css";
 
 const Header = () => {
   const [input, setInput] = useState("");
@@ -24,19 +23,39 @@ const Header = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
+  // ✅ Track user info in state
+  const [username, setUsername] = useState("");
+  const [avatarColor, setAvatarColor] = useState("");
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const suggestionRef = useRef();
   const debounceTimer = useRef(null);
+  const avatarRef = useRef(null);
 
   const showAuthModal = useSelector((state) => state.auth.showAuthModal);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
 
-  // ✅ Get stored user data from localStorage
-  const storedUser = JSON.parse(localStorage.getItem("user")) || {};
-  const username = storedUser.username || "";
-  const avatarRef = useRef(null);
+  // ✅ Load user from localStorage
+  useEffect(() => {
+    if (localStorage.getItem("user")) {
+      const storedUser = JSON.parse(localStorage.getItem("user")) || {};
+      const storedUsername = storedUser.username || "";
+      let storedAvatarColor = storedUser.avatarColor;
 
+      if (!storedAvatarColor && storedUsername) {
+        const randomHue = Math.floor(Math.random() * 360);
+        storedAvatarColor = `hsl(${randomHue}, 70%, 50%)`;
+        localStorage.setItem(
+          "user",
+          JSON.stringify({ ...storedUser, avatarColor: storedAvatarColor })
+        );
+      }
+
+      setUsername(storedUsername);
+      setAvatarColor(storedAvatarColor);
+    }
+  });
 
   // ✅ Generate initials from username
   const getInitials = (name) => {
@@ -45,17 +64,6 @@ const Header = () => {
     if (parts.length === 1) return parts[0][0].toUpperCase();
     return (parts[0][0] + parts[1][0]).toUpperCase();
   };
-
-  // ✅ If avatarColor not present in localStorage, generate & save
-  let avatarColor = storedUser.avatarColor;
-  if (!avatarColor && username) {
-    const randomHue = Math.floor(Math.random() * 360);
-    avatarColor = `hsl(${randomHue}, 70%, 50%)`; // bright color
-    localStorage.setItem(
-      "user",
-      JSON.stringify({ ...storedUser, avatarColor })
-    );
-  }
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -86,14 +94,17 @@ const Header = () => {
 
     debounceTimer.current = setTimeout(async () => {
       try {
-        const searchRes = await axios.get("https://www.googleapis.com/youtube/v3/search", {
-          params: {
-            q: input,
-            part: "snippet",
-            maxResults: 10,
-            key: import.meta.env.VITE_YOUTUBE_API_KEY,
-          },
-        });
+        const searchRes = await axios.get(
+          "https://www.googleapis.com/youtube/v3/search",
+          {
+            params: {
+              q: input,
+              part: "snippet",
+              maxResults: 10,
+              key: import.meta.env.VITE_YOUTUBE_API_KEY,
+            },
+          }
+        );
 
         const items = searchRes.data.items.map((data) => data.snippet.title);
         setSuggestions([...items]);
@@ -123,17 +134,19 @@ const Header = () => {
     setInput("");
     setSuggestions([]);
     setResults([]);
-    dispatch(clearResults()); // This resets isResult to false
+    dispatch(clearResults());
   };
+
   const handleChannelDetails = () => {
     setShowMenu(false);
-    navigate("/Mychannel"); // ✅ navigate to channel details page
+    navigate("/Mychannel");
   };
 
   const handleLogoutClick = () => {
     setShowMenu(false);
-    setShowLogoutModal(true); // ✅ open logout modal
+    setShowLogoutModal(true);
   };
+
   return (
     <>
       <header className="header">
