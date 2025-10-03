@@ -10,13 +10,16 @@ const channelRoutes = require("./routes/channelRoutes")
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000", // your frontend origin
+  credentials: true               // allow cookies to be sent
+}));
 app.use(express.json());
 
 // Routes
 app.use("/auth", authRoutes);
 app.use("/comments", commentRoutes);
-app.use("/channels",channelRoutes);
+app.use("/channels", channelRoutes);
 
 // Connect DB and start server
 connectDB();

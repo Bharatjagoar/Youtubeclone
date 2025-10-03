@@ -102,7 +102,7 @@ module.exports.deleteChannel = async (req, res) => {
 // Upload a video (stores { title, description, url } into channel.videos)
 module.exports.uploadVideo = async (req, res) => {
   try {
-    const { title, description = "", url ,user} = req.body;
+    const { title, description = "", url, user } = req.body;
     const { channelId } = req.params;
     console.log(req.body, req.params)
     if (!title || !url) {
@@ -113,10 +113,10 @@ module.exports.uploadVideo = async (req, res) => {
     console.log(channel);
     if (!channel) return res.status(404).json({ message: "Channel not found" });
     const objectId = String(channel.user);
-    console.log(objectId,user);
+    console.log(objectId, user);
     // ownership check: requireAuth middleware should set req.user
     if (!(objectId == user)) {
-      console.log("Forbidden",user,objectId)
+      console.log("Forbidden", user, objectId)
       return res.status(403).json({ message: "Forbidden" });
     }
 
@@ -167,5 +167,47 @@ module.exports.getVideoById = async (req, res) => {
   } catch (err) {
     console.error("getVideoById error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+
+// Delete a video from a channel
+module.exports.deleteVideo = async (req, res) => {
+  try {
+    const { channelId, videoId ,userid} = req.params;
+
+    // Find the channel
+    const channel = await Channel.findById(channelId);
+    if (!channel) {
+      return res.status(404).json({ message: "Channel not found" });
+    }
+
+    const objectId = String(channel.user);
+    console.log(objectId, userid);
+    // ownership check: requireAuth middleware should set req.user
+    if (!(objectId == userid)) {
+      console.log("Forbidden", userid, objectId)
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    // Find the video index in the array
+    const videoIndex = channel.videos.findIndex(
+      (vid) => vid._id.toString() === videoId
+    );
+    if (videoIndex === -1) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+
+    // Remove it
+    channel.videos.splice(videoIndex, 1);
+    await channel.save();
+
+    return res.json({
+      message: "Video deleted successfully",
+      channel,
+    });
+  } catch (err) {
+    console.error("deleteVideo error:", err);
+    return res.status(500).json({ message: "Server error", error: err.message });
   }
 };

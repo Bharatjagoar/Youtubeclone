@@ -54,7 +54,7 @@ function MyChannelPage() {
   if (!channelData) {
     return (
       <CreateEditChannelModal
-        onClose={() => {}}
+        onClose={() => { }}
         onSuccess={(newChannel) => setChannelData(newChannel)}
       />
     );
@@ -67,26 +67,27 @@ function MyChannelPage() {
 
   // Delete handler (frontend only): optimistic UI remove
   const handleDeleteVideo = async (videoId) => {
-    // optimistic: remove locally
-    setChannelData((prev) => ({
-      ...prev,
-      videos: (prev.videos || []).filter((v) => v._id !== videoId),
-    }));
-
-    /* OPTIONAL: uncomment/adjust when backend delete route exists
     try {
-      const token = localStorage.getItem("token");
-      await axios.delete(
-        `http://localhost:5000/channels/${channelData._id}/videos/${videoId}`,
-        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      const user = JSON.parse(localStorage.getItem("user"));
+      console.log(user._id);
+      const res = await axios.delete(
+        `http://localhost:5000/channels/${channelData._id}/videos/${videoId}/user/${user._id}`,
+        { withCredentials: true }
       );
-      // server responded OK — nothing else needed
+
+      // Update local state
+      setChannelData({
+        ...channelData,
+        videos: channelData.videos.filter((v) => v._id !== videoId),
+      });
+
+      console.log("Deleted video:", res.data);
     } catch (err) {
-      console.error("Failed to delete video on server", err);
-      // TODO: rollback UI or re-fetch channel
+      console.error("Error deleting video:", err);
+      alert("Failed to delete video");
     }
-    */
   };
+
 
   return (
     <div className="my-channel-page">
@@ -136,7 +137,7 @@ function MyChannelPage() {
             const thumb = ytId
               ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
               : "/default-thumb.jpg";
-
+            console.log(video);
             return (
               <MyChannelVideoCard
                 key={video._id}

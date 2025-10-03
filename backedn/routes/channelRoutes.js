@@ -18,5 +18,8 @@ router.delete("/:channelId", channelcontroller.deleteChannel);
 // Upload a new video to a channel
 router.post("/:channelId/videos", channelcontroller.uploadVideo);
 
+// Delete a video from a channel
+router.delete("/:channelId/videos/:videoId/user/:userid", channelcontroller.deleteVideo);
+
 
 module.exports = router;
