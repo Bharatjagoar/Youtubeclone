@@ -5,7 +5,7 @@ import { openAuthModal } from "../redux/authSlice";
 import { verifyTokenBeforeFetch } from "../utils/verifyTokenBeforeFetch";
 import "./VideoCard.css";
 
-const VideoCard = ({ video, detect }) => {
+const VideoCard = ({ video, detect ,clickme}) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -13,6 +13,7 @@ const VideoCard = ({ video, detect }) => {
     const isValid = await verifyTokenBeforeFetch();
     detect(isValid);
     if (!isValid) {
+      clickme();
       return;
     }
     navigate(`/video/${video.id}`, { state: { video } });

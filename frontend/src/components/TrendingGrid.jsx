@@ -22,7 +22,7 @@ const TrendingGrid = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [errorOpen, setErrorOpen] = useState(false);
-
+  const [showModal, setShowModal] = useState(false);
 
   const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
   const observerTarget = useRef(null);
@@ -142,6 +142,7 @@ const TrendingGrid = () => {
 
   return (
     <div className="trending-grid">
+      {showModal && <PromptsModal onClose={() => setShowModal(false)} />}
       {errorOpen && (
         <div className="error-banner">
           <span>{errorMsg}</span>
@@ -158,7 +159,7 @@ const TrendingGrid = () => {
 
       <main className="video-grid">
         {videos.map((video) => (
-          <VideoCard key={video.id} video={video} detect={detect} />
+          <VideoCard key={video.id} video={video} detect={detect} clickme={()=>setShowModal(true)}/>
         ))}
       </main>
 
