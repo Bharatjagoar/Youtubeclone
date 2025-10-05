@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  margin-left: 30px;
+  /* margin-left: 30px; */
 }
 
 .logo-text {
@@ -107,8 +107,12 @@
   .header {
     flex-direction: column;
     align-items: stretch;
+    /* background-color: yellow; */
   }
 
+  .logo-combo{
+    margin-left: 30px;
+  }
   .search-container {
     margin: auto;
     margin-top: 20px;

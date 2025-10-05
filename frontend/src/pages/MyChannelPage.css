@@ -47,6 +47,7 @@
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
   padding: 1rem;
+  
 }
 
 .video-card img {
@@ -226,4 +227,255 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+
+/* ========================================
+   RESPONSIVE MY CHANNEL PAGE - ADD TO END OF FILE
+   ======================================== */
+
+/* Large Tablets (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .mychannel-video-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 18px;
+  }
+
+  .my-channel-header {
+    padding: 1rem;
+  }
+}
+
+/* Tablets (max-width: 768px) */
+@media (max-width: 768px) {
+  .my-channel-page {
+    padding-bottom: 1.5rem;
+    
+  }
+
+  .my-channel-header {
+    padding: 0.8rem 1rem;
+    gap: 0.8rem;
+    background-color: yellow;
+  }
+
+  .my-channel-header .avatar {
+    width: 64px;
+    height: 64px;
+    margin-top: 40px;
+  }
+
+  .channel-title {
+    font-size: 1.3rem;
+  }
+
+  .channel-username {
+    font-size: 0.9rem;
+  }
+
+  .channel-description {
+    font-size: 0.9rem;
+  }
+
+  .mychannel-video-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    padding: 8px;
+    margin-top: 15px;
+  }
+
+  .mychannel-video-card img {
+    height: 140px;
+  }
+
+  .mychannel-video-info h4 {
+    font-size: 0.95rem;
+  }
+
+  .mychannel-video-info p {
+    font-size: 0.8rem;
+  }
+
+  .hamburger-wrapper {
+    order: 3;
+    flex-basis: 100%;
+    margin-left: 0;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .menu-dropdown {
+    top: 30px;
+  }
+
+  .menu-dropdown button {
+    width: 180px;
+    padding: 12px 15px;
+    font-size: 1rem;
+  }
+}
+
+/* Mobile (max-width: 480px) */
+@media (max-width: 480px) {
+  .my-channel-page {
+    padding-bottom: 1rem;
+  }
+
+  .my-channel-header {
+    padding: 0.6rem 0.8rem;
+    gap: 0.6rem;
+  }
+
+  .my-channel-header .avatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  .channel-meta {
+    gap: 0.3rem;
+    flex: 1;
+  }
+
+  .channel-title {
+    font-size: 1.1rem;
+    line-height: 1.3;
+  }
+
+  .channel-username {
+    font-size: 0.85rem;
+  }
+
+  .channel-description {
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+
+  .hamburger {
+    width: 22px;
+    height: 16px;
+  }
+
+  .hamburger span {
+    height: 2.5px;
+  }
+
+  .menu-dropdown {
+    top: 28px;
+    right: -5px;
+  }
+
+  .menu-dropdown button {
+    width: 160px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+
+  .mychannel-video-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    padding: 6px;
+    margin-top: 12px;
+  }
+
+  .mychannel-video-card {
+    border-radius: 10px;
+  }
+
+  .mychannel-video-card img {
+    height: 120px;
+  }
+
+  .mychannel-video-info {
+    padding: 10px;
+  }
+
+  .mychannel-video-info h4 {
+    font-size: 0.9rem;
+    line-height: 1.3;
+  }
+
+  .mychannel-video-info p {
+    font-size: 0.75rem;
+    margin: 4px 0 0;
+  }
+
+  .no-videos {
+    padding: 1.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 1.5rem;
+  }
+}
+
+/* Extra Small Devices (max-width: 360px) */
+@media (max-width: 360px) {
+  .my-channel-header {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .my-channel-header .avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .channel-title {
+    font-size: 1rem;
+  }
+
+  .channel-username {
+    font-size: 0.8rem;
+  }
+
+  .channel-description {
+    font-size: 0.8rem;
+  }
+
+  .hamburger {
+    width: 20px;
+    height: 15px;
+  }
+
+  .menu-dropdown button {
+    width: 150px;
+    padding: 9px 10px;
+    font-size: 0.85rem;
+  }
+
+  .mychannel-video-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    padding: 5px;
+  }
+
+  .mychannel-video-card img {
+    height: 100px;
+  }
+
+  .mychannel-video-info {
+    padding: 8px;
+  }
+
+  .mychannel-video-info h4 {
+    font-size: 0.85rem;
+  }
+
+  .mychannel-video-info p {
+    font-size: 0.7rem;
+  }
+}
+
+/* Single column for very small screens */
+@media (max-width: 320px) {
+  .mychannel-video-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .mychannel-video-card img {
+    height: 180px;
+  }
 }
