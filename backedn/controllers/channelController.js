@@ -62,20 +62,34 @@ module.exports.getChannelById = async (req, res) => {
 
 module.exports.deleteChannel = async (req, res) => {
   try {
-    const channel = await Channel.findById(req.params.channelId);
+    const { channelId } = req.params;
+    const { user } = req.body; // current user id from frontend
+    console.log("hellwo from cahnnd delete",req.body,req.params)
+    const channel = await Channel.findById(channelId);
     if (!channel) return res.status(404).json({ message: "Channel not found" });
 
-    if (!req.user || !channel.user.equals(req.user._id)) {
-      return res.status(403).json({ message: "Forbidden" });
+    const ownerId = String(channel.user);
+    if (!(ownerId === user)) {
+      return res.status(403).json({ message: "Forbidden: Not channel owner" });
     }
 
-    await channel.remove();
+    // Delete the channel
+    await channel.deleteOne();
+
+    // Optional: remove reference from User
+    try {
+      await User.findByIdAndUpdate(user, { $unset: { channel: "" } });
+    } catch (e) {
+      console.warn("Failed to remove channel ref from user:", e.message);
+    }
+
     res.json({ message: "Channel deleted successfully" });
   } catch (err) {
     console.error("deleteChannel error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
 
 // Upload a video (stores { title, description, url } into channel.videos)
 module.exports.uploadVideo = async (req, res) => {
@@ -152,7 +166,7 @@ module.exports.getVideoById = async (req, res) => {
 // Delete a video from a channel
 module.exports.deleteVideo = async (req, res) => {
   try {
-    const { channelId, videoId ,userid} = req.params;
+    const { channelId, videoId, userid } = req.params;
 
     // Find the channel
     const channel = await Channel.findById(channelId);
@@ -192,7 +206,7 @@ module.exports.deleteVideo = async (req, res) => {
 
 
 module.exports.updateChannel = async (req, res) => {
-  const { name, description, avatarUrl,user} = req.body;
+  const { name, description, avatarUrl, user } = req.body;
   console.log(req.body)
   try {
     const channel = await Channel.findById(req.params.channelId);

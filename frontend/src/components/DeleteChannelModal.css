@@ -1,0 +1,112 @@
+/* Modal overlay: dark semi-transparent background */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6); /* slightly darker for focus */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  backdrop-filter: blur(2px); /* subtle blur behind modal */
+}
+
+/* Modal content: card with shadow, rounded edges */
+.modal-content {
+  background: #fff;
+  padding: 2rem 2.5rem;
+  border-radius: 16px;
+  width: 450px;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  position: relative;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+/* Fade-in animation */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modal heading */
+.modal-content h2 {
+  font-size: 1.6rem;
+  margin-bottom: 0.8rem;
+  color: red;
+  font-weight: 600;
+}
+
+/* Modal text */
+.modal-content p {
+  font-size: 1rem;
+  color: #555;
+  line-height: 1.5;
+  margin-bottom: 2rem;
+}
+
+/* Buttons container: horizontal layout, space-between */
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* Common button style */
+.btn {
+  flex: 1;
+  padding: 0.65rem 0;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+/* Cancel button */
+.btn-cancel {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.btn-cancel:hover {
+  background: #e0e0e0;
+}
+
+/* Delete button */
+.btn-delete {
+  background: #ff0000;
+  color: #fff;
+}
+
+.btn-delete:hover {
+  background: #ff0000;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Optional: close button on top-right */
+.modal-content::before {
+  content: "×";
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 1.4rem;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.modal-content::before:hover {
+  color: #333;
+}

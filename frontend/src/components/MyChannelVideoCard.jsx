@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import "./MyChannelVideoCard.css";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 
-const MyChannelVideoCard = ({ video, thumb, onOpen, onDelete }) => {
+const MyChannelVideoCard = ({ video, thumb, onDelete }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const menuRef = useRef(null);
@@ -48,8 +48,7 @@ const MyChannelVideoCard = ({ video, thumb, onOpen, onDelete }) => {
           className="mychannel-thumb-wrapper"
           role="button"
           tabIndex={0}
-          onClick={() => onOpen(video._id)}
-          onKeyDown={(e) => e.key === "Enter" && onOpen(video._id)}
+          // onClick={() => onOpen(video._id)}
         >
           <img className="mychannel-thumb" src={thumb} alt={video.title} />
           <div className="mychannel-play-overlay" aria-hidden>
@@ -61,7 +60,6 @@ const MyChannelVideoCard = ({ video, thumb, onOpen, onDelete }) => {
         <div className="mychannel-video-row">
           <div
             className="mychannel-video-meta"
-            onClick={() => onOpen(video._id)}
             role="button"
             tabIndex={0}
           >

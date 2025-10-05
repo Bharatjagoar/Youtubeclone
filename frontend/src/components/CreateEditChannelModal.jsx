@@ -13,7 +13,6 @@ const CreateEditChannelModal = ({ channel, onClose, onSuccess }) => {
   const [avatarPreview, setAvatarPreview] = useState(channel?.avatarUrl || "");
   const [submitting, setSubmitting] = useState(false);
 
-
   // Only auto-generate username if creating
   useEffect(() => {
     if (!localStorage.getItem("user")) {
@@ -25,7 +24,7 @@ const CreateEditChannelModal = ({ channel, onClose, onSuccess }) => {
       const suffix = Math.random().toString(36).slice(2, 6);
       setUsername(`@${base}-${suffix}`);
     }
-  }, [name, channel]);
+  }, [name, channel, nav]);
 
   // Avatar file selection
   const onAvatarChange = (e) => {
@@ -71,7 +70,6 @@ const CreateEditChannelModal = ({ channel, onClose, onSuccess }) => {
       let backendRes;
       if (channel) {
         // Update existing channel
-        console.log(channel);
         backendRes = await axios.put(
           `http://localhost:5000/channels/${channel._id}`,
           payload,
@@ -87,7 +85,6 @@ const CreateEditChannelModal = ({ channel, onClose, onSuccess }) => {
       const { channel: savedChannel, user: updatedUser } = backendRes.data;
 
       // ✅ Update localStorage with fresh user object from backend
-      console.log(user,updatedUser)
       localStorage.setItem("user", JSON.stringify(user));
 
       // Fire onSuccess
@@ -165,10 +162,24 @@ const CreateEditChannelModal = ({ channel, onClose, onSuccess }) => {
         </p>
 
         <div className="cecc-actions">
-          <button type="button" onClick={onClose} disabled={submitting} className="cecc-btn-cancel">
+          <button
+            type="button"
+            onClick={()=>{
+              console.log("hellwo");
+              onClose();
+              nav("/")
+            }
+            }
+            disabled={submitting}
+            className="cecc-btn-cancel"
+          >
             Cancel
           </button>
-          <button type="submit" disabled={submitting} className={`cecc-btn-primary ${submitting ? "loading" : ""}`}>
+          <button
+            type="submit"
+            disabled={submitting}
+            className={`cecc-btn-primary ${submitting ? "loading" : ""}`}
+          >
             {submitting
               ? channel
                 ? "Saving…"

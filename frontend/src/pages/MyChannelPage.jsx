@@ -5,6 +5,7 @@ import axios from "axios";
 import CreateEditChannelModal from "../components/CreateEditChannelModal";
 import UploadVideoModal from "../components/UploadVideoModal";
 import MyChannelVideoCard from "../components/MyChannelVideoCard";
+import DeleteChannelModal from "../components/DeleteChannelModal.jsx";
 import "./MyChannelPage.css";
 
 function getYouTubeIdFromUrl(url) {
@@ -20,10 +21,12 @@ function getYouTubeIdFromUrl(url) {
 
 function MyChannelPage() {
   const [channelData, setChannelData] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false); // ✅ NEW
   const navigate = useNavigate();
 
   // ✅ safe JSON parse
@@ -54,6 +57,7 @@ function MyChannelPage() {
       } catch (err) {
         if (err.response?.status === 404) {
           setChannelData(null);
+          setShowCreateModal(true); // ✅ show create modal
         } else {
           console.error("Error fetching my channel:", err);
         }
@@ -67,21 +71,28 @@ function MyChannelPage() {
 
   if (loading) return <div className="loading">Loading…</div>;
 
-  if (!channelData) {
-    return (
-      <CreateEditChannelModal
-        onClose={() => {}}
-        onSuccess={(newChannel) => setChannelData(newChannel)}
-      />
-    );
-  }
+  // Delete channel handler
+  const handleConfirmDelete = async () => {
+    try {
+      const user = getStoredUser();
+      if (!user) return navigate("/");
 
-  // open video page
-  const openVideo = (videoId) => {
-    navigate(`/video/${videoId}`);
+      await axios.delete(
+        `http://localhost:5000/channels/${channelData._id}`,
+        { data: { user: user._id } }
+      );
+
+      alert("Channel deleted successfully!");
+      setChannelData(null); // ✅ reset → triggers create modal
+    } catch (err) {
+      console.error("Failed to delete channel:", err);
+      alert("Failed to delete channel");
+    } finally {
+      setShowDeleteModal(false);
+    }
   };
 
-  // Delete handler
+  // Delete handler for videos
   const handleDeleteVideo = async (videoId) => {
     try {
       const user = getStoredUser();
@@ -106,98 +117,124 @@ function MyChannelPage() {
 
   return (
     <div className="my-channel-page">
-      <div className="my-channel-header">
-        <div className="avatar">
-          {channelData.avatarUrl ? (
-            <img src={channelData.avatarUrl} alt={channelData.name} />
+      {!channelData && showCreateModal && (
+        <CreateEditChannelModal
+          onClose={() => setShowCreateModal(false)} // ✅ Now closes properly
+          onSuccess={(newChannel) => {
+            setChannelData(newChannel);
+            setShowCreateModal(false);
+          }}
+        />
+      )}
+
+      {channelData && (
+        <>
+          <div className="my-channel-header">
+            <div className="avatar">
+              {channelData.avatarUrl ? (
+                <img src={channelData.avatarUrl} alt={channelData.name} />
+              ) : (
+                <div className="avatar-fallback">
+                  {channelData.name
+                    ? channelData.name.charAt(0).toUpperCase()
+                    : "?"}
+                </div>
+              )}
+            </div>
+
+            <div className="channel-meta">
+              <h2 className="channel-title">{channelData.name}</h2>
+              <p className="channel-username">{channelData.username}</p>
+              {channelData.description && (
+                <p className="channel-description">{channelData.description}</p>
+              )}
+            </div>
+
+            <div className="hamburger-wrapper">
+              <button
+                className={`hamburger ${menuOpen ? "open" : ""}`}
+                onClick={() => setMenuOpen(!menuOpen)}
+              >
+                <span />
+                <span />
+                <span />
+              </button>
+
+              {menuOpen && (
+                <div className="menu-dropdown">
+                  <button onClick={() => {setShowEditModal(true);
+                    setMenuOpen(false);
+                  }}>
+                    ✏️ Edit Channel
+                  </button>
+                  <button onClick={() => {setShowDeleteModal(true);
+                    setMenuOpen(false);
+                  }}>
+                    🗑️ Delete Channel
+                  </button>
+                  <button onClick={() => {setShowUploadModal(true);
+                    setMenuOpen(false);
+                  }}>
+                    ⬆️ Upload Video
+                  </button>
+                </div>
+              )}
+
+              {showEditModal && (
+                <CreateEditChannelModal
+                  channel={channelData}
+                  onClose={() => setShowEditModal(false)}
+                  onSuccess={(updatedChannel) => {
+                    setChannelData(updatedChannel);
+                    setShowEditModal(false);
+                  }}
+                />
+              )}
+
+              {showDeleteModal && (
+                <DeleteChannelModal
+                  onClose={() => setShowDeleteModal(false)}
+                  onConfirm={handleConfirmDelete}
+                />
+              )}
+            </div>
+          </div>
+
+          {channelData.videos?.length > 0 ? (
+            <div className="mychannel-video-grid">
+              {channelData.videos.map((video) => {
+                const ytId = getYouTubeIdFromUrl(video.url);
+                const thumb = ytId
+                  ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
+                  : "/default-thumb.jpg";
+                return (
+                  <MyChannelVideoCard
+                    key={video._id}
+                    video={video}
+                    thumb={thumb}
+                    onDelete={handleDeleteVideo}
+                  />
+                );
+              })}
+            </div>
           ) : (
-            <div className="avatar-fallback">
-              {channelData.name
-                ? channelData.name.charAt(0).toUpperCase()
-                : "?"}
-            </div>
-          )}
-        </div>
-
-        <div className="channel-meta">
-          <h2 className="channel-title">{channelData.name}</h2>
-          <p className="channel-username">{channelData.username}</p>
-          {channelData.description && (
-            <p className="channel-description">{channelData.description}</p>
-          )}
-        </div>
-
-        <div className="hamburger-wrapper">
-          <button
-            className={`hamburger ${menuOpen ? "open" : ""}`}
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            <span />
-            <span />
-            <span />
-          </button>
-
-          {menuOpen && (
-            <div className="menu-dropdown">
-              <button onClick={() => setShowEditModal(true)}>
-                ✏️ Edit Channel
-              </button>
-              <button onClick={() => console.log("Delete channel")}>
-                🗑️ Delete Channel
-              </button>
-              <button onClick={() => setShowUploadModal(true)}>
-                ⬆️ Upload Video
-              </button>
-            </div>
+            <p className="no-videos">No videos uploaded yet.</p>
           )}
 
-          {showEditModal && (
-            <CreateEditChannelModal
-              channel={channelData}
-              onClose={() => setShowEditModal(false)}
-              onSuccess={(updatedChannel) => {
-                setChannelData(updatedChannel);
-                setShowEditModal(false);
+          {showUploadModal && (
+            <UploadVideoModal
+              channelId={channelData._id}
+              onClose={() => setShowUploadModal(false)}
+              onSuccess={(newVideo) => {
+                setChannelData({
+                  ...channelData,
+                  videos: [...(channelData.videos || []), newVideo],
+                });
+                setShowUploadModal(false);
               }}
             />
           )}
-        </div>
-      </div>
-
-      {channelData.videos?.length > 0 ? (
-        <div className="mychannel-video-grid">
-          {channelData.videos.map((video) => {
-            const ytId = getYouTubeIdFromUrl(video.url);
-            const thumb = ytId
-              ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
-              : "/default-thumb.jpg";
-            return (
-              <MyChannelVideoCard
-                key={video._id}
-                video={video}
-                thumb={thumb}
-                onOpen={openVideo}
-                onDelete={handleDeleteVideo}
-              />
-            );
-          })}
-        </div>
-      ) : (
-        <p className="no-videos">No videos uploaded yet.</p>
-      )}
-
-      {showUploadModal && (
-        <UploadVideoModal
-          channelId={channelData._id}
-          onClose={() => setShowUploadModal(false)}
-          onSuccess={(newVideo) => {
-            setChannelData({
-              ...channelData,
-              videos: [...(channelData.videos || []), newVideo],
-            });
-            setShowUploadModal(false);
-          }}
-        />
+        </>
       )}
     </div>
   );
